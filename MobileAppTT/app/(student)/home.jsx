@@ -1,86 +1,40 @@
-import { useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Modal,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 export default function StudentHome() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [dark, setDark] = useState(false);
-  const c = dark ? darkColors : lightColors;
+  const router = useRouter();
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]}>
-
-      {/* Sidebar Modal */}
-      <Modal visible={menuOpen} transparent animationType="slide">
-        <TouchableOpacity style={styles.overlay} onPress={() => setMenuOpen(false)} />
-        <View style={[styles.sidebar, { backgroundColor: c.card }]}>
-          <View style={styles.sidebarHeader}>
-            <View style={styles.logoSmall}>
-              <Text style={styles.logoSmallText}>🎓</Text>
-            </View>
-            <View>
-              <Text style={[styles.logoName, { color: c.text }]}>UAPMP</Text>
-              <Text style={[styles.logoSub, { color: c.subText }]}>Student Portal</Text>
-            </View>
-          </View>
-
-          {[
-            { icon: '🏠', label: 'Dashboard', active: true },
-            { icon: '📚', label: 'Courses' },
-            { icon: '⭐', label: 'Grades' },
-            { icon: '📅', label: 'Schedule' },
-            { icon: '⚙️', label: 'Settings' },
-          ].map((item, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.sidebarItem, item.active && { backgroundColor: '#2563eb22' }]}
-              onPress={() => setMenuOpen(false)}
-            >
-              <Text style={styles.sidebarIcon}>{item.icon}</Text>
-              <Text style={[styles.sidebarLabel, { color: item.active ? '#2563eb' : c.text }]}>
-                {item.label}
-              </Text>
-              {item.active && <View style={styles.sidebarDot} />}
-            </TouchableOpacity>
-          ))}
-
-          <TouchableOpacity
-            style={[styles.sidebarItem, { marginTop: 20, borderTopWidth: 1, borderTopColor: c.border }]}
-          >
-            <Text style={styles.sidebarIcon}>🚪</Text>
-            <Text style={[styles.sidebarLabel, { color: '#dc2626' }]}>Logout</Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
-
+    <SafeAreaView style={styles.safe}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: c.card, borderBottomColor: c.border }]}>
-        <TouchableOpacity onPress={() => setMenuOpen(true)} style={styles.hamburger}>
-          <View style={[styles.hLine, { backgroundColor: c.text }]} />
-          <View style={[styles.hLine, { backgroundColor: c.text, width: 16 }]} />
-          <View style={[styles.hLine, { backgroundColor: c.text, width: 10 }]} />
-        </TouchableOpacity>
-
-        <Text style={[styles.headerTitle, { color: c.text }]}>Dashboard</Text>
-
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <View style={styles.logoSmall}>
+            <Text style={styles.logoSmallText}>🎓</Text>
+          </View>
+          <View>
+            <Text style={styles.logoName}>UAPMP</Text>
+            <Text style={styles.logoSub}>Student Portal</Text>
+          </View>
+        </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.bg }]}>
+          <TouchableOpacity style={styles.iconBtn}>
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.iconBtn, { backgroundColor: c.bg }]}
-            onPress={() => setDark(!dark)}
-          >
-            <Text style={styles.iconBtnText}>{dark ? '☀️' : '🌙'}</Text>
+          <TouchableOpacity style={styles.iconBtn}>
+            <Text style={styles.iconBtnText}>☀️</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-
         {/* Welcome Card */}
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeTop}>
@@ -112,7 +66,7 @@ export default function StudentHome() {
         {/* Enrolled Classes */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: c.text }]}>Enrolled Classes</Text>
+            <Text style={styles.sectionTitle}>Enrolled Classes</Text>
             <TouchableOpacity>
               <Text style={styles.viewAll}>View all</Text>
             </TouchableOpacity>
@@ -123,18 +77,18 @@ export default function StudentHome() {
               { code: 'MATH202', name: 'Linear Algebra', prof: 'Prof. Katherine Johnson', time: 'Tue/Thu • 2:00 PM', color: '#059669', btn: 'Class Ended', active: false },
               { code: 'ENG105', name: 'Technical Writing', prof: 'Prof. Hemingway', time: 'Fri • 9:00 AM', color: '#d97706', btn: 'View Details', active: true },
             ].map((course, i) => (
-              <View key={i} style={[styles.courseCard, { backgroundColor: c.card }]}>
+              <View key={i} style={styles.courseCard}>
                 <View style={[styles.courseTop, { backgroundColor: course.color }]}>
                   <Text style={styles.courseCode}>{course.code}</Text>
                 </View>
                 <View style={styles.courseBody}>
-                  <Text style={[styles.courseName, { color: c.text }]}>{course.name}</Text>
-                  <Text style={[styles.courseProf, { color: c.subText }]}>{course.prof}</Text>
-                  <Text style={[styles.courseTime, { color: c.subText }]}>🕐 {course.time}</Text>
+                  <Text style={styles.courseName}>{course.name}</Text>
+                  <Text style={styles.courseProf}>{course.prof}</Text>
+                  <Text style={styles.courseTime}>🕐 {course.time}</Text>
                   <TouchableOpacity
-                    style={[styles.courseBtn, !course.active && { backgroundColor: c.bg }]}
+                    style={[styles.courseBtn, !course.active && styles.courseBtnDisabled]}
                   >
-                    <Text style={[styles.courseBtnText, !course.active && { color: '#9ca3af' }]}>
+                    <Text style={[styles.courseBtnText, !course.active && styles.courseBtnTextDisabled]}>
                       {course.btn}
                     </Text>
                   </TouchableOpacity>
@@ -147,28 +101,26 @@ export default function StudentHome() {
         {/* Pending Tasks */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: c.text }]}>Pending Tasks</Text>
-            <TouchableOpacity><Text style={styles.viewAll}>+ Add</Text></TouchableOpacity>
+            <Text style={styles.sectionTitle}>Pending Tasks</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewAll}>+ Add</Text>
+            </TouchableOpacity>
           </View>
-          <View style={[styles.card, { backgroundColor: c.card }]}>
+          <View style={styles.card}>
             {[
               { name: 'Submit Algorithm Project', priority: 'HIGH', type: 'Course', color: '#fee2e2', textColor: '#dc2626' },
               { name: 'Register for next semester', priority: 'MEDIUM', type: 'Personal', color: '#fef3c7', textColor: '#d97706' },
               { name: 'Return Library Book', priority: 'LOW', type: 'Personal', color: '#dcfce7', textColor: '#16a34a' },
             ].map((task, i) => (
-              <View key={i} style={[
-                styles.taskRow,
-                i === 2 && { borderBottomWidth: 0 },
-                { borderBottomColor: c.border }
-              ]}>
-                <View style={[styles.taskCheck, { borderColor: c.border }]} />
+              <View key={i} style={[styles.taskRow, i === 2 && { borderBottomWidth: 0 }]}>
+                <View style={styles.taskCheck} />
                 <View style={styles.taskInfo}>
-                  <Text style={[styles.taskName, { color: c.text }]}>{task.name}</Text>
+                  <Text style={styles.taskName}>{task.name}</Text>
                   <View style={styles.taskMeta}>
                     <View style={[styles.priorityBadge, { backgroundColor: task.color }]}>
                       <Text style={[styles.priorityText, { color: task.textColor }]}>{task.priority}</Text>
                     </View>
-                    <Text style={[styles.taskType, { color: c.subText }]}>{task.type}</Text>
+                    <Text style={styles.taskType}>{task.type}</Text>
                   </View>
                 </View>
               </View>
@@ -179,11 +131,13 @@ export default function StudentHome() {
         {/* Recent Grades */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: c.text }]}>Recent Grades</Text>
-            <TouchableOpacity><Text style={styles.viewAll}>View Report Card</Text></TouchableOpacity>
+            <Text style={styles.sectionTitle}>Recent Grades</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewAll}>View Report Card</Text>
+            </TouchableOpacity>
           </View>
-          <View style={[styles.card, { backgroundColor: c.card }]}>
-            <View style={[styles.tableHeader, { borderBottomColor: c.border }]}>
+          <View style={styles.card}>
+            <View style={styles.tableHeader}>
               <Text style={[styles.tableHead, { flex: 1 }]}>COURSE</Text>
               <Text style={[styles.tableHead, { flex: 2 }]}>ASSESSMENT</Text>
               <Text style={[styles.tableHead, { flex: 1 }]}>SCORE</Text>
@@ -194,14 +148,10 @@ export default function StudentHome() {
               { course: 'MATH202', assessment: 'Quiz 3', score: '10/10', grade: 'A', color: '#dcfce7', textColor: '#15803d' },
               { course: 'ENG105', assessment: 'Essay', score: '92/100', grade: 'A-', color: '#d1fae5', textColor: '#065f46' },
             ].map((row, i) => (
-              <View key={i} style={[
-                styles.tableRow,
-                i === 2 && { borderBottomWidth: 0 },
-                { borderBottomColor: c.border }
-              ]}>
-                <Text style={[styles.tableCell, { flex: 1, fontWeight: '700', color: c.text }]}>{row.course}</Text>
-                <Text style={[styles.tableCell, { flex: 2, color: c.subText }]}>{row.assessment}</Text>
-                <Text style={[styles.tableCell, { flex: 1, color: c.subText }]}>{row.score}</Text>
+              <View key={i} style={[styles.tableRow, i === 2 && { borderBottomWidth: 0 }]}>
+                <Text style={[styles.tableCell, { flex: 1, fontWeight: '700' }]}>{row.course}</Text>
+                <Text style={[styles.tableCell, { flex: 2 }]}>{row.assessment}</Text>
+                <Text style={[styles.tableCell, { flex: 1 }]}>{row.score}</Text>
                 <View style={{ flex: 1, alignItems: 'center' }}>
                   <View style={[styles.gradeBadge, { backgroundColor: row.color }]}>
                     <Text style={[styles.gradeText, { color: row.textColor }]}>{row.grade}</Text>
@@ -214,83 +164,64 @@ export default function StudentHome() {
 
         {/* Attendance */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: c.text }]}>Attendance</Text>
-          <View style={[styles.card, { backgroundColor: c.card, flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 }]}>
+          <Text style={styles.sectionTitle}>Attendance</Text>
+          <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 }]}>
             <View style={styles.attendanceCircle}>
               <Text style={styles.attendancePercent}>92%</Text>
             </View>
             <View>
-              <Text style={[styles.attendanceTitle, { color: c.text }]}>Overall Attendance</Text>
-              <Text style={[styles.attendanceSub, { color: c.subText }]}>You missed 3 classes this semester.</Text>
+              <Text style={styles.attendanceTitle}>Overall Attendance</Text>
+              <Text style={styles.attendanceSub}>You missed 3 classes this semester.</Text>
             </View>
           </View>
         </View>
 
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* Bottom Nav */}
+      <View style={styles.bottomNav}>
+        {[
+          { icon: '🏠', label: 'Dashboard', active: true },
+          { icon: '📚', label: 'Courses' },
+          { icon: '⭐', label: 'Grades' },
+          { icon: '📅', label: 'Schedule' },
+          { icon: '⚙️', label: 'Settings' },
+        ].map((item, i) => (
+          <TouchableOpacity key={i} style={styles.navItem}>
+            <Text style={styles.navIcon}>{item.icon}</Text>
+            <Text style={[styles.navLabel, item.active && styles.navLabelActive]}>
+              {item.label}
+            </Text>
+            {item.active && <View style={styles.navDot} />}
+          </TouchableOpacity>
+        ))}
+      </View>
     </SafeAreaView>
   );
 }
 
-const lightColors = {
-  bg: '#f0f4ff',
-  card: '#ffffff',
-  text: '#1e1b4b',
-  subText: '#64748b',
-  border: '#f0f0f0',
-};
-
-const darkColors = {
-  bg: '#0f172a',
-  card: '#1e293b',
-  text: '#f1f5f9',
-  subText: '#94a3b8',
-  border: '#334155',
-};
-
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  overlay: {
-    position: 'absolute', top: 0, left: 0,
-    right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  sidebar: {
-    position: 'absolute', top: 0, left: 0,
-    bottom: 0, width: 260, padding: 24,
-    elevation: 20, paddingTop: 50,
-  },
-  sidebarHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 10, marginBottom: 30,
-  },
-  sidebarItem: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 14, padding: 12, borderRadius: 12, marginBottom: 4,
-  },
-  sidebarIcon: { fontSize: 20 },
-  sidebarLabel: { fontSize: 15, fontWeight: '600', flex: 1 },
-  sidebarDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#2563eb' },
+  safe: { flex: 1, backgroundColor: '#f0f4ff' },
   header: {
-    padding: 14, flexDirection: 'row',
-    justifyContent: 'space-between', alignItems: 'center',
-    elevation: 3, borderBottomWidth: 1,
+    backgroundColor: 'white', padding: 14,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', elevation: 3,
   },
-  hamburger: { gap: 5, padding: 4 },
-  hLine: { height: 2.5, width: 22, borderRadius: 2 },
-  headerTitle: { fontSize: 18, fontWeight: '800' },
-  headerRight: { flexDirection: 'row', gap: 8 },
-  iconBtn: {
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  iconBtnText: { fontSize: 16 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   logoSmall: {
     width: 36, height: 36, borderRadius: 10,
     backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center',
   },
   logoSmallText: { fontSize: 18 },
-  logoName: { fontSize: 15, fontWeight: '900' },
-  logoSub: { fontSize: 11 },
+  logoName: { fontSize: 15, fontWeight: '900', color: '#1e1b4b' },
+  logoSub: { fontSize: 11, color: '#888' },
+  headerRight: { flexDirection: 'row', gap: 8 },
+  iconBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#f5f3ff', alignItems: 'center', justifyContent: 'center',
+  },
+  iconBtnText: { fontSize: 16 },
   scroll: { padding: 16 },
   welcomeCard: {
     backgroundColor: '#2563eb', borderRadius: 20,
@@ -316,14 +247,11 @@ const styles = StyleSheet.create({
   statVal: { fontSize: 20, fontWeight: '900', color: 'white' },
   statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
   section: { marginBottom: 20 },
-  sectionHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 12,
-  },
-  sectionTitle: { fontSize: 16, fontWeight: '700' },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1e1b4b' },
   viewAll: { fontSize: 13, color: '#2563eb', fontWeight: '600' },
   courseCard: {
-    width: 160, borderRadius: 16,
+    width: 160, backgroundColor: 'white', borderRadius: 16,
     marginRight: 12, overflow: 'hidden', elevation: 3,
   },
   courseTop: { height: 80, padding: 10, justifyContent: 'flex-start' },
@@ -333,36 +261,44 @@ const styles = StyleSheet.create({
     paddingVertical: 3, borderRadius: 6, alignSelf: 'flex-start',
   },
   courseBody: { padding: 12 },
-  courseName: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  courseProf: { fontSize: 11, marginBottom: 6 },
-  courseTime: { fontSize: 11, marginBottom: 10 },
+  courseName: { fontSize: 13, fontWeight: '700', color: '#1e1b4b', marginBottom: 4 },
+  courseProf: { fontSize: 11, color: '#888', marginBottom: 6 },
+  courseTime: { fontSize: 11, color: '#666', marginBottom: 10 },
   courseBtn: {
     backgroundColor: '#2563eb', borderRadius: 8,
     paddingVertical: 8, alignItems: 'center',
   },
+  courseBtnDisabled: { backgroundColor: '#f3f4f6' },
   courseBtnText: { color: 'white', fontSize: 12, fontWeight: '700' },
-  card: { borderRadius: 16, padding: 16, elevation: 2 },
+  courseBtnTextDisabled: { color: '#9ca3af' },
+  card: {
+    backgroundColor: 'white', borderRadius: 16,
+    padding: 16, elevation: 2,
+  },
   taskRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 10, borderBottomWidth: 1, gap: 12,
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f9fafb', gap: 12,
   },
-  taskCheck: { width: 20, height: 20, borderRadius: 6, borderWidth: 2 },
+  taskCheck: {
+    width: 20, height: 20, borderRadius: 6,
+    borderWidth: 2, borderColor: '#e5e7eb',
+  },
   taskInfo: { flex: 1 },
-  taskName: { fontSize: 13, fontWeight: '600' },
+  taskName: { fontSize: 13, fontWeight: '600', color: '#1e1b4b' },
   taskMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   priorityBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 },
   priorityText: { fontSize: 10, fontWeight: '700' },
-  taskType: { fontSize: 10 },
+  taskType: { fontSize: 10, color: '#888' },
   tableHeader: {
     flexDirection: 'row', paddingBottom: 8,
-    borderBottomWidth: 1, marginBottom: 4,
+    borderBottomWidth: 1, borderBottomColor: '#f3f4f6', marginBottom: 4,
   },
   tableHead: { fontSize: 10, color: '#9ca3af', fontWeight: '600', textTransform: 'uppercase' },
   tableRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 10, borderBottomWidth: 1,
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f9fafb',
   },
-  tableCell: { fontSize: 12 },
+  tableCell: { fontSize: 12, color: '#374151' },
   gradeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   gradeText: { fontSize: 11, fontWeight: '700' },
   attendanceCircle: {
@@ -371,6 +307,16 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   attendancePercent: { fontSize: 16, fontWeight: '900', color: '#2563eb' },
-  attendanceTitle: { fontSize: 15, fontWeight: '700' },
-  attendanceSub: { fontSize: 12, marginTop: 4 },
+  attendanceTitle: { fontSize: 15, fontWeight: '700', color: '#1e1b4b' },
+  attendanceSub: { fontSize: 12, color: '#888', marginTop: 4 },
+  bottomNav: {
+    backgroundColor: 'white', flexDirection: 'row',
+    justifyContent: 'space-around', paddingTop: 10,
+    paddingBottom: 16, borderTopWidth: 1, borderTopColor: '#f0f0f0', elevation: 8,
+  },
+  navItem: { alignItems: 'center', gap: 3 },
+  navIcon: { fontSize: 22 },
+  navLabel: { fontSize: 10, color: '#9ca3af', fontWeight: '600' },
+  navLabelActive: { color: '#2563eb' },
+  navDot: { width: 4, height: 4, backgroundColor: '#2563eb', borderRadius: 2 },
 });

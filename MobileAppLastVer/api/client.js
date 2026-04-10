@@ -2,7 +2,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const BASE_URL = 'http://192.168.1.33:5000/api'; // غيره بالـ IP بتاعك
+const BASE_URL = 'http://192.168.1.4:5000/api'; // غيره بالـ IP بتاعك
 
 export const apiCall = async (endpoint, method = 'GET', body = null, token = null) => {
   const headers = { 'Content-Type': 'application/json' };

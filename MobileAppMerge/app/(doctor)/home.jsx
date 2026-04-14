@@ -463,12 +463,12 @@ export default function DoctorHome() {
           </View>
 
           {[
-            { icon: '🏠', label: 'Dashboard', active: true, route: '/(doctor)/home' },
+            { icon: '🏠', label: 'Home', active: true, route: '/(doctor)/home' },
             { icon: '📚', label: 'Classes', route: '/(doctor)/classes' },
             { icon: '👥', label: 'Students' },
             { icon: '📅', label: 'Schedule' },
             { icon: '📊', label: 'Reports' },
-            { icon: '💬', label: 'Messages' },
+            { icon: '💬', label: 'Announcements', route: '/(doctor)/announcements' },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
@@ -506,7 +506,10 @@ export default function DoctorHome() {
         <Text style={[styles.headerTitle, { color: c.text }]}>Dashboard</Text>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.bg }]}>
+           <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: c.bg }]}
+            onPress={() => router.push('/(doctor)/announcements')} // السطر ده هو اللي هيعمل النقل
+          >
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -579,8 +582,8 @@ export default function DoctorHome() {
             { id: 2, code: 'MAT202', name: 'Linear Algebra', time: 'Tue/Thu, 2:00 PM', room: 'Room 105', students: 28, status: 'ACTIVE', statusColor: '#dcfce7', statusTextColor: '#15803d' },
             { id: 3, code: 'CS450', name: 'Web Dev Capstone', time: 'Fri, 9:00 AM', room: 'Room 201', students: 35, status: 'PAUSED', statusColor: '#fef3c7', statusTextColor: '#d97706' },
           ].map((cls, i) => (
-            <TouchableOpacity 
-              key={i} 
+            <TouchableOpacity
+              key={i}
               style={[styles.classCard, { backgroundColor: c.card }]}
               onPress={() => router.push(`/(doctor)/class-details?id=${cls.id}`)}
             >

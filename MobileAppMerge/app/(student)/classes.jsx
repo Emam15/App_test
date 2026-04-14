@@ -452,10 +452,11 @@ export default function StudentClasses() {
               </View>
             </View>
             {[
-              { icon: '🏠', label: 'Dashboard', route: '/(student)/home' },
+              { icon: '🏠', label: 'Home', route: '/(student)/home' },
               { icon: '📚', label: 'Courses', active: true },
               { icon: '⭐', label: 'Grades' },
               { icon: '📅', label: 'Schedule' },
+              { icon: '💬', label: 'Announcements', route: '/(student)/announcements' },
               { icon: '⚙️', label: 'Settings' },
             ].map((item, i) => (
               <TouchableOpacity

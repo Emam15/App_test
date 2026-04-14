@@ -1,4 +1,4 @@
- 
+
 
 
 
@@ -314,10 +314,11 @@ export default function StudentHome() {
             </View>
           </View>
           {[
-            { icon: '🏠', label: 'Dashboard', active: true, route: '/(student)/home' },
+            { icon: '🏠', label: 'Home', active: true, route: '/(student)/home' },
             { icon: '📚', label: 'Courses', route: '/(student)/classes' },
             { icon: '⭐', label: 'Grades' },
             { icon: '📅', label: 'Schedule' },
+            { icon: '💬', label: 'Announcements', route: '/(student)/announcements' },
             { icon: '⚙️', label: 'Settings' },
           ].map((item, i) => (
             <TouchableOpacity
@@ -352,7 +353,10 @@ export default function StudentHome() {
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: c.text }]}>Dashboard</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.bg }]}>
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: c.bg }]}
+            onPress={() => router.push('/(doctor)/announcements')} // السطر ده هو اللي هيعمل النقل
+          >
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.bg }]} onPress={toggleDark}>

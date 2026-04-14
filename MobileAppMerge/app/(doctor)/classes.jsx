@@ -8,67 +8,87 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 
 const INITIAL_CLASSES = [
-  { id: 1, code: 'CS101', name: 'Intro to Computer Science', doctor: 'Dr. Marcus Sterling', dept: 'Computer Science', students: 45, status: 'ACTIVE', color: '#2563eb' },
-  { id: 2, code: 'CS302', name: 'Data Structures & Algo', doctor: 'Dr. Sarah Jenkins', dept: 'Computer Science', students: 38, status: 'ACTIVE', color: '#059669' },
-  { id: 3, code: 'MTH500', name: 'Stochastic Processes', doctor: 'Dr. Lisa Ray', dept: 'Mathematics', students: 30, status: 'ACTIVE', color: '#7c3aed' },
-  { id: 4, code: 'ENG310', name: 'Advanced Robotics Lab', doctor: 'Dr. Sarah Jenkins', dept: 'Engineering', students: 45, status: 'PAUSED', color: '#d97706' },
-  { id: 5, code: 'ART105', name: 'UI/UX Architectural Systems', doctor: 'Prof. Elias Vance', dept: 'Visual Arts', students: 82, status: 'ACTIVE', color: '#db2777' },
-  { id: 6, code: 'BUS440', name: 'Global Market Analytics', doctor: 'Prof. Robert Chen', dept: 'Business', students: 110, status: 'CLOSED', color: '#64748b' },
+  {
+    id: 1,
+    code: 'CS101',
+    name: 'Intro to Computer Science',
+    section: 'Section A',
+    students: 45,
+    time: 'Mon/Wed 10:00 AM',
+    room: 'Room 304',
+    status: 'ACTIVE',
+    color: '#2563eb',
+    announcements: 3,
+  },
+  {
+    id: 2,
+    code: 'CS302',
+    name: 'Data Structures & Algo',
+    section: 'Section B',
+    students: 38,
+    time: 'Tue/Thu 02:00 PM',
+    room: 'Room 105',
+    status: 'ACTIVE',
+    color: '#059669',
+    announcements: 1,
+  },
+  {
+    id: 3,
+    code: 'CS450',
+    name: 'Web Development Capstone',
+    section: 'Section A',
+    students: 42,
+    time: 'Fri 09:00 AM',
+    room: 'Room 201',
+    status: 'PAUSED',
+    color: '#d97706',
+    announcements: 0,
+  },
 ];
 
-const DOCTORS = ['Dr. Marcus Sterling', 'Dr. Sarah Jenkins', 'Dr. Lisa Ray', 'Prof. Elias Vance', 'Prof. Robert Chen'];
-const DEPTS = ['Computer Science', 'Mathematics', 'Engineering', 'Visual Arts', 'Business', 'Humanities'];
-
-export default function AdminClasses() {
+export default function DoctorClasses() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [classes, setClasses] = useState(INITIAL_CLASSES);
   const [createModal, setCreateModal] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('ALL');
-  const [newClass, setNewClass] = useState({ code: '', name: '', doctor: '', dept: '' });
+  const [newClass, setNewClass] = useState({ code: '', name: '', section: '', time: '', room: '' });
   const { colors: c, dark, toggleDark } = useTheme();
   const router = useRouter();
 
-  const filtered = filterStatus === 'ALL' ? classes : classes.filter(cl => cl.status === filterStatus);
-
   const handleCreate = () => {
-    if (!newClass.code || !newClass.name || !newClass.doctor) {
-      Alert.alert('Error', 'Please fill in Code, Name and Doctor');
+    if (!newClass.code || !newClass.name) {
+      Alert.alert('Error', 'Please fill in Code and Name at least');
       return;
     }
-    setClasses(prev => [...prev, {
+    const created = {
       id: Date.now(),
       code: newClass.code,
       name: newClass.name,
-      doctor: newClass.doctor,
-      dept: newClass.dept || 'General',
+      section: newClass.section || 'Section A',
       students: 0,
+      time: newClass.time || 'TBD',
+      room: newClass.room || 'TBD',
       status: 'ACTIVE',
-      color: '#2563eb',
-    }]);
-    setNewClass({ code: '', name: '', doctor: '', dept: '' });
+      color: '#7c3aed',
+      announcements: 0,
+    };
+    setClasses(prev => [...prev, created]);
+    setNewClass({ code: '', name: '', section: '', time: '', room: '' });
     setCreateModal(false);
-    Alert.alert('Success! 🎉', 'Class created successfully');
+    Alert.alert('Success! 🎉', `Class "${created.name}" created successfully`);
   };
 
   const handleDelete = (id, name) => {
-    Alert.alert('Delete Class', `Are you sure you want to delete "${name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => setClasses(prev => prev.filter(c => c.id !== id)) },
-    ]);
-  };
-
-  const handleToggleStatus = (id) => {
-    setClasses(prev => prev.map(cl => {
-      if (cl.id !== id) return cl;
-      const next = cl.status === 'ACTIVE' ? 'PAUSED' : cl.status === 'PAUSED' ? 'CLOSED' : 'ACTIVE';
-      return { ...cl, status: next };
-    }));
-  };
-
-  const statusColor = (status) => {
-    if (status === 'ACTIVE') return { bg: '#dcfce7', text: '#15803d' };
-    if (status === 'PAUSED') return { bg: '#fef3c7', text: '#d97706' };
-    return { bg: '#fee2e2', text: '#dc2626' };
+    Alert.alert(
+      'Delete Class',
+      `Are you sure you want to delete "${name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete', style: 'destructive',
+          onPress: () => setClasses(prev => prev.filter(c => c.id !== id)),
+        },
+      ]
+    );
   };
 
   return (
@@ -84,24 +104,29 @@ export default function AdminClasses() {
             </View>
             <View>
               <Text style={[styles.logoName, { color: c.text }]}>UAPMP</Text>
-              <Text style={[styles.logoSub, { color: c.subText }]}>Admin Console</Text>
+              <Text style={[styles.logoSub, { color: c.subText }]}>Instructor Portal</Text>
             </View>
           </View>
           {[
-            { icon: '🏠', label: 'Dashboard', route: '/(admin)/home' },
-            { icon: '📢', label: 'Announcements' },
-            { icon: '👥', label: 'Users' },
+            { icon: '🏠', label: 'Home', route: '/(doctor)/home' },
             { icon: '📚', label: 'Classes', active: true },
+            { icon: '👥', label: 'Students' },
+            { icon: '📅', label: 'Schedule' },
             { icon: '📊', label: 'Reports' },
-            { icon: '⚙️', label: 'Settings' },
+            { icon: '💬', label: 'Announcements', route: '/(doctor)/announcements' },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
               style={[styles.sidebarItem, item.active && { backgroundColor: '#2563eb22' }]}
-              onPress={() => { setMenuOpen(false); if (item.route) router.push(item.route); }}
+              onPress={() => {
+                setMenuOpen(false);
+                if (item.route) router.push(item.route);
+              }}
             >
               <Text style={styles.sidebarIcon}>{item.icon}</Text>
-              <Text style={[styles.sidebarLabel, { color: item.active ? '#2563eb' : c.text }]}>{item.label}</Text>
+              <Text style={[styles.sidebarLabel, { color: item.active ? '#2563eb' : c.text }]}>
+                {item.label}
+              </Text>
               {item.active && <View style={styles.sidebarDot} />}
             </TouchableOpacity>
           ))}
@@ -117,11 +142,13 @@ export default function AdminClasses() {
         <View style={styles.modalBg}>
           <View style={[styles.modalCard, { backgroundColor: c.card }]}>
             <Text style={[styles.modalTitle, { color: c.text }]}>Create New Class</Text>
+
             {[
               { label: 'Course Code *', key: 'code', placeholder: 'e.g. CS101' },
               { label: 'Course Name *', key: 'name', placeholder: 'e.g. Intro to Algorithms' },
-              { label: 'Doctor *', key: 'doctor', placeholder: 'e.g. Dr. Marcus Sterling' },
-              { label: 'Department', key: 'dept', placeholder: 'e.g. Computer Science' },
+              { label: 'Section', key: 'section', placeholder: 'e.g. Section A' },
+              { label: 'Schedule', key: 'time', placeholder: 'e.g. Mon/Wed 10:00 AM' },
+              { label: 'Room', key: 'room', placeholder: 'e.g. Room 304' },
             ].map((field) => (
               <View key={field.key} style={styles.fieldWrap}>
                 <Text style={[styles.fieldLabel, { color: c.subText }]}>{field.label}</Text>
@@ -134,12 +161,16 @@ export default function AdminClasses() {
                 />
               </View>
             ))}
+
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={[styles.modalCancelBtn, { borderColor: c.border }]} onPress={() => setCreateModal(false)}>
+              <TouchableOpacity
+                style={[styles.modalCancelBtn, { borderColor: c.border }]}
+                onPress={() => setCreateModal(false)}
+              >
                 <Text style={[styles.modalCancelText, { color: c.text }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalCreateBtn} onPress={handleCreate}>
-                <Text style={styles.modalCreateText}>Create</Text>
+                <Text style={styles.modalCreateText}>Create Class</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -153,10 +184,12 @@ export default function AdminClasses() {
           <View style={[styles.hLine, { backgroundColor: c.text, width: 16 }]} />
           <View style={[styles.hLine, { backgroundColor: c.text, width: 10 }]} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: c.text }]}>All Classes</Text>
-        <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.bg }]} onPress={toggleDark}>
-          <Text style={styles.iconBtnText}>{dark ? '☀️' : '🌙'}</Text>
-        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: c.text }]}>My Classes</Text>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.bg }]} onPress={toggleDark}>
+            <Text style={styles.iconBtnText}>{dark ? '☀️' : '🌙'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -164,56 +197,30 @@ export default function AdminClasses() {
         {/* Banner */}
         <View style={styles.banner}>
           <View>
-            <Text style={styles.bannerTitle}>Classes Management</Text>
-            <Text style={styles.bannerSub}>
-              {classes.length} Total • {classes.filter(c => c.status === 'ACTIVE').length} Active • {classes.reduce((a, b) => a + b.students, 0)} Students
-            </Text>
+            <Text style={styles.bannerTitle}>My Classes</Text>
+            <Text style={styles.bannerSub}>{classes.length} Classes • {classes.reduce((a, b) => a + b.students, 0)} Total Students</Text>
           </View>
           <TouchableOpacity style={styles.createBtn} onPress={() => setCreateModal(true)}>
             <Text style={styles.createBtnText}>+ New Class</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Quick Stats */}
-        <View style={styles.statsRow}>
-          {[
-            { label: 'Active', val: classes.filter(c => c.status === 'ACTIVE').length, color: '#dcfce7', textColor: '#15803d' },
-            { label: 'Paused', val: classes.filter(c => c.status === 'PAUSED').length, color: '#fef3c7', textColor: '#d97706' },
-            { label: 'Closed', val: classes.filter(c => c.status === 'CLOSED').length, color: '#fee2e2', textColor: '#dc2626' },
-            { label: 'Total', val: classes.length, color: '#eff6ff', textColor: '#2563eb' },
-          ].map((s, i) => (
-            <View key={i} style={[styles.statBox, { backgroundColor: s.color }]}>
-              <Text style={[styles.statVal, { color: s.textColor }]}>{s.val}</Text>
-              <Text style={[styles.statLbl, { color: s.textColor }]}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Filter Tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll} contentContainerStyle={styles.filtersContent}>
-          {['ALL', 'ACTIVE', 'PAUSED', 'CLOSED'].map((f) => (
-            <TouchableOpacity
-              key={f}
-              style={[styles.filterChip, { borderColor: c.border, backgroundColor: c.card }, filterStatus === f && styles.filterChipActive]}
-              onPress={() => setFilterStatus(f)}
-            >
-              <Text style={[styles.filterText, { color: c.subText }, filterStatus === f && styles.filterTextActive]}>{f}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
         {/* Classes List */}
-        {filtered.map((cls) => (
+        {classes.map((cls) => (
           <View key={cls.id} style={[styles.classCard, { backgroundColor: c.card }]}>
 
-            {/* Card Top */}
-            <View style={[styles.classCardTop, { backgroundColor: cls.color }]}>
+            {/* Card Header */}
+            <View style={[styles.classCardHeader, { backgroundColor: cls.color }]}>
               <View>
                 <Text style={styles.classCode}>{cls.code}</Text>
-                <Text style={styles.classDept}>{cls.dept}</Text>
+                <Text style={styles.classSection}>{cls.section}</Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor(cls.status).bg }]}>
-                <Text style={[styles.statusText, { color: statusColor(cls.status).text }]}>{cls.status}</Text>
+              <View style={[styles.statusBadge, {
+                backgroundColor: cls.status === 'ACTIVE' ? '#dcfce7' : '#fef3c7'
+              }]}>
+                <Text style={[styles.statusText, {
+                  color: cls.status === 'ACTIVE' ? '#15803d' : '#d97706'
+                }]}>{cls.status}</Text>
               </View>
             </View>
 
@@ -222,26 +229,31 @@ export default function AdminClasses() {
               <Text style={[styles.className, { color: c.text }]}>{cls.name}</Text>
 
               <View style={styles.metaRow}>
-                <Text style={[styles.meta, { color: c.subText }]}>👨‍🏫 {cls.doctor}</Text>
                 <Text style={[styles.meta, { color: c.subText }]}>👥 {cls.students} Students</Text>
+                <Text style={[styles.meta, { color: c.subText }]}>🕐 {cls.time}</Text>
+                <Text style={[styles.meta, { color: c.subText }]}>📍 {cls.room}</Text>
               </View>
+
+              {cls.announcements > 0 && (
+                <View style={styles.annBadge}>
+                  <Text style={styles.annBadgeText}>📢 {cls.announcements} New Announcements</Text>
+                </View>
+              )}
 
               {/* Actions */}
               <View style={styles.actionsRow}>
                 <TouchableOpacity
                   style={styles.actionBtn}
-                  onPress={() => router.push('/(admin)/class-details')}
+                  onPress={() => router.push('/(doctor)/class-details')}
                 >
-                  <Text style={styles.actionBtnText}>View Class</Text>
+                  <Text style={styles.actionBtnText}>Open Class</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.toggleBtn, { backgroundColor: statusColor(cls.status).bg }]}
-                  onPress={() => handleToggleStatus(cls.id)}
+                  style={[styles.actionBtnSecondary, { borderColor: c.border }]}
+                  onPress={() => router.push('/(doctor)/class-details')}
                 >
-                  <Text style={[styles.toggleBtnText, { color: statusColor(cls.status).text }]}>
-                    {cls.status === 'ACTIVE' ? '⏸ Pause' : cls.status === 'PAUSED' ? '▶️ Resume' : '🔄 Reopen'}
-                  </Text>
+                  <Text style={[styles.actionBtnSecondaryText, { color: c.text }]}>👥 Students</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -285,6 +297,7 @@ const styles = StyleSheet.create({
   hamburger: { gap: 5, padding: 4 },
   hLine: { height: 2.5, width: 22, borderRadius: 2 },
   headerTitle: { fontSize: 18, fontWeight: '800' },
+  headerRight: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   iconBtnText: { fontSize: 16 },
   logoSmall: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center' },
@@ -292,36 +305,48 @@ const styles = StyleSheet.create({
   logoName: { fontSize: 15, fontWeight: '900' },
   logoSub: { fontSize: 11 },
   scroll: { padding: 16 },
-  banner: { backgroundColor: '#2563eb', borderRadius: 20, padding: 20, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  banner: {
+    backgroundColor: '#2563eb', borderRadius: 20,
+    padding: 20, marginBottom: 16,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
   bannerTitle: { fontSize: 20, fontWeight: '900', color: 'white' },
-  bannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
-  createBtn: { backgroundColor: 'white', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 },
+  bannerSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
+  createBtn: {
+    backgroundColor: 'white', borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 10,
+  },
   createBtnText: { color: '#2563eb', fontWeight: '800', fontSize: 13 },
-  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  statBox: { flex: 1, borderRadius: 12, padding: 12, alignItems: 'center' },
-  statVal: { fontSize: 22, fontWeight: '900' },
-  statLbl: { fontSize: 11, fontWeight: '600', marginTop: 2 },
-  filtersScroll: { marginBottom: 16 },
-  filtersContent: { gap: 8, paddingRight: 16 },
-  filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5 },
-  filterChipActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  filterText: { fontSize: 13, fontWeight: '600' },
-  filterTextActive: { color: 'white' },
   classCard: { borderRadius: 20, overflow: 'hidden', elevation: 3, marginBottom: 16 },
-  classCardTop: { padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  classCardHeader: { padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   classCode: { fontSize: 18, fontWeight: '900', color: 'white' },
-  classDept: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+  classSection: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   statusText: { fontSize: 11, fontWeight: '700' },
   classCardBody: { padding: 16 },
   className: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
-  metaRow: { gap: 6, marginBottom: 14 },
+  metaRow: { gap: 6, marginBottom: 12 },
   meta: { fontSize: 13 },
+  annBadge: {
+    backgroundColor: '#eff6ff', borderRadius: 8,
+    paddingHorizontal: 10, paddingVertical: 6, marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  annBadgeText: { color: '#2563eb', fontSize: 12, fontWeight: '700' },
   actionsRow: { flexDirection: 'row', gap: 8 },
-  actionBtn: { flex: 1, backgroundColor: '#2563eb', borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  actionBtn: {
+    flex: 1, backgroundColor: '#2563eb',
+    borderRadius: 10, paddingVertical: 10, alignItems: 'center',
+  },
   actionBtnText: { color: 'white', fontSize: 13, fontWeight: '700' },
-  toggleBtn: { flex: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
-  toggleBtnText: { fontSize: 13, fontWeight: '700' },
-  deleteBtn: { width: 44, borderRadius: 10, backgroundColor: '#fee2e2', alignItems: 'center', justifyContent: 'center' },
+  actionBtnSecondary: {
+    flex: 1, borderWidth: 1.5,
+    borderRadius: 10, paddingVertical: 10, alignItems: 'center',
+  },
+  actionBtnSecondaryText: { fontSize: 13, fontWeight: '700' },
+  deleteBtn: {
+    width: 44, borderRadius: 10,
+    backgroundColor: '#fee2e2', alignItems: 'center', justifyContent: 'center',
+  },
   deleteBtnText: { fontSize: 18 },
 });

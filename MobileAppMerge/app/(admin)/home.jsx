@@ -1,4 +1,4 @@
- import { useState } from 'react';
+import { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Modal,
@@ -11,8 +11,8 @@ import { useTheme } from '../../context/ThemeContext';
 
 export default function AdminHome() {
   const [menuOpen, setMenuOpen] = useState(false);
- const { colors: c, toggleDark, dark } = useTheme();
- const router = useRouter();
+  const { colors: c, toggleDark, dark } = useTheme();
+  const router = useRouter();
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]}>
@@ -32,8 +32,8 @@ export default function AdminHome() {
           </View>
 
           {[
-            { icon: '🏠', label: 'Dashboard', active: true, route: '/(admin)/home' },
-            { icon: '📢', label: 'Announcements' },
+            { icon: '🏠', label: 'Home', active: true, route: '/(admin)/home' },
+            { icon: '💬', label: 'Announcements', route: '/(admin)/announcements' },
             { icon: '👥', label: 'Users' },
             { icon: '📚', label: 'Classes', route: '/(admin)/classes' },
             { icon: '📊', label: 'Reports' },
@@ -43,17 +43,17 @@ export default function AdminHome() {
               key={i}
               style={[styles.sidebarItem, item.active && { backgroundColor: '#2563eb22' }]}
               onPress={() => {
-              setMenuOpen(false);
-              if (item.route) router.push(item.route);
-          }}
-  >
-    <Text style={styles.sidebarIcon}>{item.icon}</Text>
-    <Text style={[styles.sidebarLabel, { color: item.active ? '#2563eb' : c.text }]}>
-      {item.label}
-    </Text>
-    {item.active && <View style={styles.sidebarDot} />}
-  </TouchableOpacity>
-))}
+                setMenuOpen(false);
+                if (item.route) router.push(item.route);
+              }}
+            >
+              <Text style={styles.sidebarIcon}>{item.icon}</Text>
+              <Text style={[styles.sidebarLabel, { color: item.active ? '#2563eb' : c.text }]}>
+                {item.label}
+              </Text>
+              {item.active && <View style={styles.sidebarDot} />}
+            </TouchableOpacity>
+          ))}
           <TouchableOpacity
             style={[styles.sidebarItem, { marginTop: 20, borderTopWidth: 1, borderTopColor: c.border }]}
           >
@@ -74,7 +74,10 @@ export default function AdminHome() {
         <Text style={[styles.headerTitle, { color: c.text }]}>Dashboard</Text>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: c.bg }]}>
+          <TouchableOpacity
+            style={[styles.iconBtn, { backgroundColor: c.bg }]}
+            onPress={() => router.push('/(doctor)/announcements')} // السطر ده هو اللي هيعمل النقل
+          >
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
           <TouchableOpacity

@@ -1,31 +1,60 @@
-import React, { useState } from "react";
+// mapp/app/(auth)/login.jsx
+
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
+  StyleSheet,      // 👈 تأكد إنه موجود
   SafeAreaView,
+  Alert,
+  ActivityIndicator
 } from "react-native";
 
-export default function HomeScreen({ navigation }) {
+
+
+
+import React, { useState } from "react";
+import { router } from "expo-router";
+import { useAuth } from "../../context/AuthContext";
+
+export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
-  // ✅ Login Function
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
-      alert("Please enter email and password");
+      alert("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
       return;
     }
 
-    // هنا تقدر تحط Firebase أو API بعدين
-    navigation.navigate("Main");
+    setLoading(true);
+    const result = await login(email, password);
+    setLoading(false);
+
+    if (result.success) {
+      // ✅ التوجيه حسب الدور (role)
+      if (result.role === 'student') {
+        router.replace('/(student)/home');
+      } else if (result.role === 'instructor' || result.role === 'doctor') {
+        router.replace('/(doctor)/home');
+      } else if (result.role === 'admin') {
+        router.replace('/(admin)/home');
+      }
+    } else {
+      alert(result.message);
+    }
   };
+
+
+
+
+
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Logo */}
       <View style={styles.logoContainer}>
         <View style={styles.iconBox}>
           <Text style={styles.icon}>🏛️</Text>
@@ -33,22 +62,21 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.logoText}>UAPMP</Text>
       </View>
 
-      {/* Card */}
       <View style={styles.card}>
-        <Text style={styles.title}>Sign in to UAPMP</Text>
-        <Text style={styles.subtitle}>
-          Enter your academic credentials to access the portal
-        </Text>
+        <Text style={styles.title}>تسجيل الدخول</Text>
+        <Text style={styles.subtitle}>أدخل بياناتك الأكاديمية للوصول إلى البوابة</Text>
 
-        <Text style={styles.label}>UNIVERSITY EMAIL</Text>
+        <Text style={styles.label}>البريد الإلكتروني الجامعي</Text>
         <TextInput
-          placeholder="student.name@university.edu"
+          placeholder="student@std.fci.cu.edu.eg"
           value={email}
           onChangeText={setEmail}
           style={styles.input}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
 
-        <Text style={styles.label}>PASSWORD</Text>
+        <Text style={styles.label}>كلمة المرور</Text>
         <TextInput
           placeholder="••••••••"
           secureTextEntry
@@ -57,28 +85,34 @@ export default function HomeScreen({ navigation }) {
           style={styles.input}
         />
 
-        {/* ✅ زرار Login بعد التعديل */}
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Log In</Text>
+        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>دخول</Text>
+          )}
         </TouchableOpacity>
 
-        <Text style={styles.link}>Forgot Password?</Text>
+        <TouchableOpacity onPress={() => {/* forgot password */ }}>
+          <Text style={styles.link}>نسيت كلمة المرور؟</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Bottom */}
       <View style={styles.bottom}>
-        <Text style={styles.smallText}>Don't have an account?</Text>
-
+        <Text style={styles.smallText}>ليس لديك حساب؟</Text>
         <TouchableOpacity
           style={styles.signupBtn}
-          onPress={() => navigation.navigate("SignUp")}
+          onPress={() => router.push("/signup")}
         >
-          <Text style={styles.signupText}>SIGN UP?</Text>
+          <Text style={styles.signupText}>إنشاء حساب</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
+
+// الـ styles زي ما هي، بس ممكن تزود:
+// textAlign: 'right' للعربية
 
 const styles = StyleSheet.create({
   container: {

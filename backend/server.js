@@ -1,9 +1,5 @@
-/**
- * UAPMP Backend Server
- * Main entry point for the application
- */
-
-require("dotenv").config({ path: __dirname + "/../config/.env" }); // Load environment variables from .env file in config directory
+// server.js
+require("dotenv").config({ path: __dirname + "/../config/.env" });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -12,35 +8,31 @@ const authRoutes = require("./routes/auth");
 const announcementRoutes = require("./routes/announcement");
 const classesRoutes = require("./routes/classes");
 const attendanceRoutes = require("./routes/attendance");
+const mobileRoutes = require("./routes/mobile");  // 👈 استدعاء الـ mobile routes
 
-const app = express();
+const app = express();  // ✅ لازم يكون قبل ما تستخدم app
 
 // ============================================
 // MIDDLEWARE CONFIGURATION
 // ============================================
-// Configure CORS to allow cross-origin requests from frontend
 app.use(
   cors({
     origin: function (origin, callback) {
-      callback(null, true); // اسمح لأي حاجة في الـ development
+      callback(null, true);
     },
     credentials: true,
   }),
 );
-// Parse incoming JSON request bodies
 app.use(express.json());
 
 // ============================================
 // API ROUTES
 // ============================================
-// Mount authentication routes at /api/auth endpoint
 app.use("/api/auth", authRoutes);
-// Mount announcement routes at /api/announcements endpoint
 app.use("/api/announcements", announcementRoutes);
-// Mount classes routes at /api/classes endpoint
 app.use("/api/classes", classesRoutes);
-// Mount attendance routes at /api/attendance endpoint
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/mobile", mobileRoutes);  // ✅ بعد ما عرفت app
 
 // ============================================
 // DATABASE CONNECTION & SERVER INITIALIZATION
@@ -48,18 +40,25 @@ app.use("/api/attendance", attendanceRoutes);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    // Database connection successful
     console.log("[INFO] Database connection established successfully");
 
-    // Start the Express server only after database connection is established
-    app.listen(process.env.PORT, () => {
-      console.log(`[SUCCESS] Server initialized on port ${process.env.PORT}`);
-      console.log("[INFO] Application is ready to accept requests");
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[SUCCESS] Server initialized on port ${PORT}`);
+
+      // عرض الـ IP عشان الموبايل يتصل
+      const { networkInterfaces } = require('os');
+      const nets = networkInterfaces();
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+          if (net.family === 'IPv4' && !net.internal) {
+            console.log(`[INFO] Mobile app connect to: http://${net.address}:${PORT}`);
+          }
+        }
+      }
     });
   })
   .catch((err) => {
-    // Database connection failed - exit application
     console.error("[ERROR] Database connection failed:", err.message);
     process.exit(1);
   });
-  

@@ -438,12 +438,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+
+
+
 
 
 export default function DoctorHome() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { colors: c, toggleDark, dark } = useTheme();
   const router = useRouter();
+  const { logout, user } = useAuth();
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+  };
+
+  const handleNotifications = () => {
+    router.push('/hammad/NotIDOC');  // 👈 إشعارات الدكتور
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]}>
@@ -485,9 +498,9 @@ export default function DoctorHome() {
               {item.active && <View style={styles.sidebarDot} />}
             </TouchableOpacity>
           ))}
-
           <TouchableOpacity
             style={[styles.sidebarItem, { marginTop: 20, borderTopWidth: 1, borderTopColor: c.border }]}
+            onPress={handleLogout}
           >
             <Text style={styles.sidebarIcon}>🚪</Text>
             <Text style={[styles.sidebarLabel, { color: '#dc2626' }]}>Logout</Text>
@@ -506,9 +519,9 @@ export default function DoctorHome() {
         <Text style={[styles.headerTitle, { color: c.text }]}>Dashboard</Text>
 
         <View style={styles.headerRight}>
-           <TouchableOpacity
+          <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: c.bg }]}
-            onPress={() => router.push('/(doctor)/announcements')} // السطر ده هو اللي هيعمل النقل
+            onPress={handleNotifications}
           >
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>

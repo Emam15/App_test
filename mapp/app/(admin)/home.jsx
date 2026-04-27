@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Modal,
+  TouchableOpacity, Modal, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
-
-
+//import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
+import { router } from 'expo-router';
 
 export default function AdminHome() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -38,6 +39,13 @@ export default function AdminHome() {
             { icon: '📚', label: 'Classes', route: '/(admin)/classes' },
             { icon: '📊', label: 'Reports' },
             { icon: '⚙️', label: 'Settings' },
+
+            {
+              icon: '🚪', label: 'Logout', isLogout: true, action: async () => {
+                setMenuOpen(false);
+                await logout();
+              }
+            },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
@@ -45,12 +53,13 @@ export default function AdminHome() {
               onPress={() => {
                 setMenuOpen(false);
                 if (item.route) router.push(item.route);
+                if (item.action) item.action();
               }}
             >
               <Text style={styles.sidebarIcon}>{item.icon}</Text>
-              <Text style={[styles.sidebarLabel, { color: item.active ? '#2563eb' : c.text }]}>
-                {item.label}
-              </Text>
+              <Text style={[styles.sidebarLabel, { color: item.isLogout ? '#dc2626' : (item.active ? '#2563eb' : c.text) }]}></Text>
+              {item.label}
+
               {item.active && <View style={styles.sidebarDot} />}
             </TouchableOpacity>
           ))}

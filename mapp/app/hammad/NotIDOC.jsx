@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
-import { 
-  StyleSheet, Text, View, FlatList, SafeAreaView, 
-  TouchableOpacity, TextInput, Modal, Alert, ScrollView, KeyboardAvoidingView, Platform 
+import {
+  StyleSheet, Text, View, FlatList, SafeAreaView,
+  TouchableOpacity, TextInput, Modal, Alert, ScrollView, KeyboardAvoidingView, Platform
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+
 import { StatusBar } from 'expo-status-bar';
 
 export default function TeacherPortal() {
   const [notifs, setNotifs] = useState([
-    { 
-      id: '1', 
-      title: 'موعد تسليم المشروع النهائي', 
-      description: 'يرجى الالتزام بالموعد المحدد لتسليم المشاريع (الخميس القادم).', 
-      audience: 'Students', 
+    {
+      id: '1',
+      title: 'موعد تسليم المشروع النهائي',
+      description: 'يرجى الالتزام بالموعد المحدد لتسليم المشاريع (الخميس القادم).',
+      audience: 'Students',
       date: '10:00 AM',
       comments: [
         { user: 'أحمد محمود (طالب)', text: 'هل يمكن التمديد ليوم السبت؟' },
         { user: 'المعلم (أنا)', text: 'للأسف المواعيد نهائية يا أحمد.' }
-      ] 
+      ]
     }
   ]);
 
@@ -29,7 +29,9 @@ export default function TeacherPortal() {
   const [replyText, setReplyText] = useState('');
 
   const openAdd = () => {
+    console.log("openAdd pressed");
     setIsEditMode(false);
+
     setTitle(''); setDesc('');
     setIsModalVisible(true);
   };
@@ -74,11 +76,11 @@ export default function TeacherPortal() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      
+
       {/* Header - اللون الأساسي الأزرق الملكي */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
-          <Ionicons name="add" size={24} color="white" />
+          <Text style={{ fontSize: 24, color: 'white' }}>➕</Text>
           <Text style={styles.addBtnText}>إضافة منشور</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>لوحة المعلم</Text>
@@ -91,18 +93,19 @@ export default function TeacherPortal() {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card} onPress={() => openEdit(item)}>
             <View style={styles.cardHeader}>
-              {/* لمسة خضراء خفيفة للمعلم */}
-              <View style={styles.teacherBadge}><Text style={styles.teacherBadgeText}>لوحة التحكم</Text></View>
+              <View style={styles.teacherBadge}>
+                <Text style={styles.teacherBadgeText}>لوحة التحكم</Text>
+              </View>
               <Text style={styles.dateText}>{item.date}</Text>
             </View>
             <Text style={styles.cardTitle}>{item.title}</Text>
             <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
             <View style={styles.cardFooter}>
-                <Text style={styles.commHint}>💬 {item.comments?.length || 0} تعليقات</Text>
-                <View style={styles.manageBtn}>
-                    <Text style={styles.manageBtnText}>إدارة وتعليقات</Text>
-                    <Ionicons name="pencil" size={14} color="#10B981" />
-                </View>
+              <Text style={styles.commHint}>💬 {String(item.comments?.length || 0)} تعليقات</Text>
+              <View style={styles.manageBtn}>
+                <Text style={styles.manageBtnText}>إدارة وتعليقات</Text>
+                <Text style={styles.editIcon}>✏️</Text>
+              </View>
             </View>
           </TouchableOpacity>
         )}
@@ -111,39 +114,42 @@ export default function TeacherPortal() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.overlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setIsModalVisible(false)}><Ionicons name="close" size={26} color="#64748B" /></TouchableOpacity>
-              <Text style={styles.modalHeaderTitle}>{isEditMode ? 'تعديل المنشور' : 'نشر جديد'}</Text>
-              {isEditMode && <TouchableOpacity onPress={confirmDelete}><Ionicons name="trash-outline" size={22} color="#EF4444" /></TouchableOpacity>}
-            </View>
-            
+              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+                <Text style={{ fontSize: 26, color: '#64748B' }}>✖️</Text>
+              </TouchableOpacity>              <Text style={styles.modalHeaderTitle}>{isEditMode ? 'تعديل المنشور' : 'نشر جديد'}</Text>
+              {isEditMode && (
+                <TouchableOpacity onPress={confirmDelete}>
+                  <Text style={{ fontSize: 22, color: '#EF4444' }}>🗑️</Text>
+                </TouchableOpacity>
+              )}            </View>
+
             <ScrollView showsVerticalScrollIndicator={false}>
-                <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="عنوان التنبيه" textAlign="right" />
-                <TextInput style={[styles.input, { height: 80 }]} value={desc} onChangeText={setDesc} multiline placeholder="التفاصيل..." textAlign="right" />
-                
-                {isEditMode && (
-                  <View style={styles.commentsSection}>
-                    <Text style={styles.sectionTitle}>الردود والتعليقات:</Text>
-                    {notifs.find(n => n.id === currentId)?.comments.map((c, i) => (
-                      <View key={i} style={[styles.cBox, c.user.includes('المعلم') && styles.teacherCBox]}>
-                        <Text style={[styles.cUser, c.user.includes('المعلم') && {color: '#10B981'}]}>{c.user}</Text>
-                        <Text style={styles.cText}>{c.text}</Text>
-                      </View>
-                    ))}
-                    
-                    <View style={styles.replyArea}>
-                        <TouchableOpacity style={styles.sendReplyBtn} onPress={handleTeacherReply}>
-                            <Ionicons name="arrow-back" size={18} color="white" />
-                        </TouchableOpacity>
-                        <TextInput style={styles.replyInput} placeholder="اكتب ردك..." value={replyText} onChangeText={setReplyText} textAlign="right" />
+              <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="عنوان التنبيه" textAlign="right" />
+              <TextInput style={[styles.input, { height: 80 }]} value={desc} onChangeText={setDesc} multiline placeholder="التفاصيل..." textAlign="right" />
+
+              {isEditMode && (
+                <View style={styles.commentsSection}>
+                  <Text style={styles.sectionTitle}>الردود والتعليقات:</Text>
+                  {notifs.find(n => n.id === currentId)?.comments.map((c, i) => (
+                    <View key={i} style={[styles.cBox, c.user.includes('المعلم') && styles.teacherCBox]}>
+                      <Text style={[styles.cUser, c.user.includes('المعلم') && { color: '#10B981' }]}>{c.user}</Text>
+                      <Text style={styles.cText}>{c.text}</Text>
                     </View>
+                  ))}
+
+                  <View style={styles.replyArea}>
+                    <TouchableOpacity style={styles.sendReplyBtn} onPress={handleTeacherReply}>
+                      <Text style={{ fontSize: 18, color: 'white' }}>📤</Text>                    </TouchableOpacity>
+                    <TextInput style={styles.replyInput} placeholder="اكتب ردك..." value={replyText} onChangeText={setReplyText} textAlign="right" />
                   </View>
-                )}
+                </View>
+              )}
             </ScrollView>
 
             <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.btnSave} onPress={handleSave}>
-                  <Text style={styles.btnSaveText}>حفظ ونشر</Text>
-                </TouchableOpacity>
+              <TouchableOpacity style={styles.btnSave} onPress={handleSave}>
+                <Text style={styles.btnSaveText}>حفظ ونشر</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -176,7 +182,7 @@ const styles = StyleSheet.create({
   modalHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   modalHeaderTitle: { fontSize: 18, fontWeight: 'bold' },
   input: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 12, marginBottom: 10 },
-  
+
   commentsSection: { marginTop: 15, padding: 15, backgroundColor: '#F1F5F9', borderRadius: 15 },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', textAlign: 'right', marginBottom: 10 },
   cBox: { backgroundColor: 'white', padding: 10, borderRadius: 10, marginBottom: 8, borderRightWidth: 3, borderRightColor: '#CBD5E1' },

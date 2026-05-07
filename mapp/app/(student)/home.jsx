@@ -1,6 +1,4 @@
-
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Modal,
@@ -9,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 export default function StudentHome() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,12 +16,12 @@ export default function StudentHome() {
   const [attendance, setAttendance] = useState(0);
   const [grades, setGrades] = useState([]);
   const [missedClasses, setMissedClasses] = useState(0);
-
-
+  const [globalAnnouncements, setGlobalAnnouncements] = useState([]);
 
   const { colors: c, dark, toggleDark } = useTheme();
   const router = useRouter();
   const { logout, user } = useAuth();
+
   const handleLogout = async () => {
     setMenuOpen(false);
     await logout();
@@ -32,9 +31,18 @@ export default function StudentHome() {
     router.push('/hammad/NotSTD');
   };
 
+  const fetchGlobalAnnouncements = async () => {
+    try {
+      const response = await api.get('/announcements');
+      setGlobalAnnouncements(response.data.announcements || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-
-
+  useEffect(() => {
+    fetchGlobalAnnouncements();
+  }, []);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]}>
@@ -93,7 +101,7 @@ export default function StudentHome() {
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: c.bg }]}
-            onPress={handleNotifications} // السطر ده هو اللي هيعمل النقل
+            onPress={handleNotifications}
           >
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
@@ -104,6 +112,18 @@ export default function StudentHome() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {globalAnnouncements.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: c.text }]}>📢 Announcements</Text>
+            {globalAnnouncements.slice(0, 3).map((ann) => (
+              <View key={ann._id} style={[styles.annCard, { backgroundColor: c.card, borderLeftWidth: 4, borderLeftColor: '#2563eb' }]}>
+                <Text style={[styles.annTitle, { color: c.text, fontWeight: 'bold' }]}>{ann.title}</Text>
+                <Text style={[styles.annMessage, { color: c.subText }]}>{ann.message}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeTop}>
             <View style={styles.avatar}>
@@ -117,27 +137,19 @@ export default function StudentHome() {
           </View>
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              {/* هنا المتغير courses.length هيقرأ طول المصفوفة، لو فاضية هيظهر 0 */}
               <Text style={styles.statVal}>{courses.length}</Text>
               <Text style={styles.statLbl}>Courses</Text>
             </View>
-
             <View style={styles.statBox}>
-              {/* هنا المتغير attendance هيظهر القيمة اللي في الـ state */}
               <Text style={styles.statVal}>{attendance}%</Text>
               <Text style={styles.statLbl}>Attendance</Text>
             </View>
-
             <View style={styles.statBox}>
-              {/* دي ممكن تسيبها ثابتة أو تعمل لها state لو حابب */}
               <Text style={styles.statVal}>N/A</Text>
               <Text style={styles.statLbl}>Avg Grade</Text>
             </View>
           </View>
         </View>
-
-
-
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -149,20 +161,18 @@ export default function StudentHome() {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {courses.length === 0 ? (
-              /* ده الجزء اللي هيظهر لما الدنيا تكون متصفرة */
               <View style={{ padding: 20, alignItems: 'center', width: 250 }}>
                 <Text style={{ color: c.subText, textAlign: 'center', marginBottom: 10 }}>
                   You haven't joined any classes yet.
                 </Text>
                 <TouchableOpacity
                   style={[styles.courseBtn, { paddingHorizontal: 20 }]}
-                  onPress={() => router.push('/(student)/join-class')}
+                  onPress={() => router.push('/join-class')}
                 >
                   <Text style={styles.courseBtnText}>+ Join a Class</Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              /* لو فيه داتا.. الـ map هتشتغل هنا */
               courses.map((course, i) => (
                 <TouchableOpacity
                   key={i}
@@ -188,7 +198,6 @@ export default function StudentHome() {
             )}
           </ScrollView>
         </View>
-
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -256,7 +265,6 @@ export default function StudentHome() {
           <Text style={[styles.sectionTitle, { color: c.text }]}>Attendance</Text>
           <View style={[styles.card, { backgroundColor: c.card, flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 10 }]}>
             <View style={styles.attendanceCircle}>
-
               <Text style={styles.attendancePercent}>{attendance}%</Text>
             </View>
             <View>
@@ -341,4 +349,7 @@ const styles = StyleSheet.create({
   attendancePercent: { fontSize: 16, fontWeight: '900', color: '#2563eb' },
   attendanceTitle: { fontSize: 15, fontWeight: '700' },
   attendanceSub: { fontSize: 12, marginTop: 4 },
+  annCard: { borderRadius: 12, padding: 14, marginBottom: 10, elevation: 2 },
+  annTitle: { fontSize: 14, marginBottom: 4 },
+  annMessage: { fontSize: 13 },
 });

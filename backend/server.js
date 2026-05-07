@@ -9,6 +9,9 @@ const announcementRoutes = require("./routes/announcement");
 const classesRoutes = require("./routes/classes");
 const attendanceRoutes = require("./routes/attendance");
 const mobileRoutes = require("./routes/mobile");  // 👈 استدعاء الـ mobile routes
+const classAnnouncementRoutes = require("./routes/class-announcements");
+const commentRoutes = require("./routes/comments");
+
 
 const app = express();  // ✅ لازم يكون قبل ما تستخدم app
 
@@ -25,15 +28,24 @@ app.use(
 );
 app.use(express.json());
 
+
+console.log("Registered routes:");
+console.log("- /api/auth");
+console.log("- /api/announcements");
+console.log("- /api/classes");
+console.log("- /api/attendance");
+console.log("- /api/mobile");
+
 // ============================================
 // API ROUTES
 // ============================================
 app.use("/api/auth", authRoutes);
 app.use("/api/announcements", announcementRoutes);
+app.use("/api/class-announcements", classAnnouncementRoutes);
 app.use("/api/classes", classesRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/mobile", mobileRoutes);  // ✅ بعد ما عرفت app
-
+app.use("/api/comments", commentRoutes);
 // ============================================
 // DATABASE CONNECTION & SERVER INITIALIZATION
 // ============================================

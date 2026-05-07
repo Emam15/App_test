@@ -1,4 +1,6 @@
-import { useState } from 'react';
+//import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Modal, TextInput, Alert,
@@ -6,7 +8,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
-
+import { useLocalSearchParams } from 'expo-router';
+import api from '../../services/api';
 const INITIAL_STUDENTS = [
   { id: 1, name: 'Ahmed Mohamed', studentId: '20240001', grade: 'B+', attendance: '92%' },
   { id: 2, name: 'Sara Ali', studentId: '20240002', grade: 'A', attendance: '98%' },
@@ -24,12 +27,39 @@ const INITIAL_MATERIAL = [
   { id: 2, name: 'Lab 02: Exercises', type: 'DOC', size: '1.1 MB', icon: '📝' },
   { id: 3, name: 'Recording: Logic Gates', type: 'VIDEO', size: '45:12 mins', icon: '🎥' },
 ];
-
 export default function DoctorClassDetails() {
   const [activeTab, setActiveTab] = useState('announcements');
-  const [announcements, setAnnouncements] = useState(INITIAL_ANNOUNCEMENTS);
+  const [announcements, setAnnouncements] = useState([]);
   const [material, setMaterial] = useState(INITIAL_MATERIAL);
   const [students, setStudents] = useState(INITIAL_STUDENTS);
+
+
+  const { id } = useLocalSearchParams(); // classId من الرابط
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      fetchAnnouncements();
+    }
+  }, [id]);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await api.get(`/class-announcements/class/${id}`);
+      if (response.data.success) {
+        setAnnouncements(response.data.announcements);
+      }
+    } catch (error) {
+      console.error('Fetch announcements error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+
+
 
   // Modals
   const [annModal, setAnnModal] = useState(false);
@@ -43,29 +73,55 @@ export default function DoctorClassDetails() {
 
   const { colors: c, dark, toggleDark } = useTheme();
   const router = useRouter();
+  // comment
+
+  const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null); // لو عاوز ردود على تعليقات
+
 
   // Handlers
-  const handleAddAnn = () => {
+  const handleAddAnn = async () => {
     if (!newAnn.title || !newAnn.body) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    setAnnouncements(prev => [{
-      id: Date.now(), title: newAnn.title,
-      body: newAnn.body, time: 'JUST NOW',
-    }, ...prev]);
-    setNewAnn({ title: '', body: '' });
-    setAnnModal(false);
-    Alert.alert('Success! 📢', 'Announcement posted successfully');
-  };
 
-  const handleDeleteAnn = (id) => {
+    try {
+      const response = await api.post('/class-announcements', {
+        classId: id,
+        title: newAnn.title,
+        body: newAnn.body
+      });
+
+      if (response.data.success) {
+        Alert.alert('Success!', 'Announcement posted successfully');
+        setNewAnn({ title: '', body: '' });
+        setAnnModal(false);
+        fetchAnnouncements();
+      }
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to post');
+    }
+  };
+  const handleDeleteAnn = (announcementId) => {
     Alert.alert('Delete', 'Delete this announcement?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => setAnnouncements(prev => prev.filter(a => a.id !== id)) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.delete(`/class-announcements/${announcementId}`);
+            fetchAnnouncements();
+            Alert.alert('Success', 'Announcement deleted');
+          } catch (error) {
+            console.error('Delete error:', error);
+            Alert.alert('Error', 'Failed to delete announcement');
+          }
+        }
+      }
     ]);
   };
-
   const handleAddMaterial = () => {
     if (!newMaterial.name) {
       Alert.alert('Error', 'Please enter file name');
@@ -106,6 +162,31 @@ export default function DoctorClassDetails() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Remove', style: 'destructive', onPress: () => setStudents(prev => prev.filter(s => s.id !== id)) },
     ]);
+  };
+
+  const addComment = async (announcementId, parentCommentId = null) => {
+    if (!newComment.trim()) {
+      Alert.alert('تنبيه', 'الرجاء كتابة تعليق');
+      return;
+    }
+    // في addComment
+    console.log('Posting to:', '/comments');
+    console.log('Data:', { announcementId, text: newComment, parentCommentId });
+
+    try {
+      await api.post('/comments', {
+        announcementId,
+        text: newComment,
+        parentCommentId, // لو رد على تعليق معين
+      });
+      setNewComment('');
+      setReplyingTo(null);
+      fetchAnnouncements();
+      Alert.alert('نجاح', 'تم إضافة تعليقك');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('خطأ', 'فشل إضافة التعليق');
+    }
   };
 
   return (
@@ -293,18 +374,85 @@ export default function DoctorClassDetails() {
               <Text style={styles.addBtnText}>+ Post New Announcement</Text>
             </TouchableOpacity>
             {announcements.map((ann) => (
-              <View key={ann.id} style={[styles.annCard, { backgroundColor: c.card }]}>
+
+              <View key={ann._id} style={[styles.annCard, { backgroundColor: c.card }]}>
                 <View style={styles.annTop}>
                   <Text style={[styles.annTitle, { color: c.text }]}>{ann.title}</Text>
-                  <Text style={[styles.annTime, { color: c.subText }]}>{ann.time}</Text>
+                  <Text style={[styles.annTime, { color: c.subText }]}>
+                    {new Date(ann.createdAt).toLocaleDateString('ar-EG')}
+                  </Text>
                 </View>
                 <Text style={[styles.annBody, { color: c.subText }]}>{ann.body}</Text>
                 <TouchableOpacity
                   style={styles.deleteAnnBtn}
-                  onPress={() => handleDeleteAnn(ann.id)}
+                  onPress={() => handleDeleteAnn(ann._id)}
                 >
                   <Text style={styles.deleteAnnText}>🗑️ Delete</Text>
                 </TouchableOpacity>
+
+
+                {/* قسم التعليقات */}
+                <View style={styles.commentsSection}>
+                  <Text style={[styles.commentsTitle, { color: c.text }]}>
+                    💬 التعليقات ({ann.comments?.length || 0})
+                  </Text>
+
+                  {ann.comments?.map((comment) => (
+                    <View key={comment._id} style={[styles.commentItem, { backgroundColor: c.bg }]}>
+                      <View style={styles.commentHeader}>
+                        <Text style={[styles.commentUser, { color: '#2563eb' }]}>
+                          {comment.userId?.fullName} ({comment.userRole === 'student' ? 'طالب' : 'دكتور'})
+                        </Text>
+                        {comment.userRole !== 'instructor' && (
+                          <TouchableOpacity onPress={() => {
+                            setReplyingTo(comment._id);
+                            setNewComment(`@${comment.userId?.fullName} `);
+                          }}>
+                            <Text style={styles.replyBtn}>رد</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                      <Text style={[styles.commentText, { color: c.text }]}>{comment.text}</Text>
+                      <Text style={[styles.commentTime, { color: c.subText }]}>
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </Text>
+
+                      {/* الردود على هذا التعليق */}
+                      {comment.replies?.map((reply) => (
+                        <View key={reply._id} style={[styles.replyItem, { backgroundColor: c.bg, marginLeft: 20 }]}>
+                          <Text style={[styles.commentUser, { color: '#059669' }]}>
+                            {reply.userId?.fullName} ({reply.userRole === 'student' ? 'طالب' : 'دكتور'})
+                          </Text>
+                          <Text style={[styles.commentText, { color: c.text }]}>{reply.text}</Text>
+                          <Text style={[styles.commentTime, { color: c.subText }]}>
+                            {new Date(reply.createdAt).toLocaleString()}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  ))}
+
+                  <View style={styles.commentInputRow}>
+                    <TextInput
+                      style={[styles.commentInput, { backgroundColor: c.bg, borderColor: c.border, color: c.text }]}
+                      placeholder={replyingTo ? "اكتب ردك..." : "اكتب تعليقك..."}
+                      placeholderTextColor={c.subText}
+                      value={newComment}
+                      onChangeText={setNewComment}
+                    />
+                    <TouchableOpacity
+                      style={styles.commentButton}
+                      onPress={() => addComment(ann._id, replyingTo)}
+                    >
+                      <Text style={styles.commentButtonText}>إرسال</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {replyingTo && (
+                    <TouchableOpacity onPress={() => { setReplyingTo(null); setNewComment(''); }}>
+                      <Text style={styles.cancelReply}>إلغاء الرد</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             ))}
           </View>
@@ -452,5 +600,8 @@ const styles = StyleSheet.create({
   studentName: { fontSize: 13, fontWeight: '700' },
   studentId: { fontSize: 11, marginTop: 1 },
   studentGrade: { fontSize: 13, fontWeight: '700' },
-  studentAttend: { fontSize: 13 },
+  studentAttend: { fontSize: 13 }, commentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
+  replyBtn: { fontSize: 11, color: '#2563eb', fontWeight: '600' },
+  replyItem: { marginTop: 8, padding: 8, borderRadius: 8 },
+  cancelReply: { fontSize: 12, color: '#dc2626', textAlign: 'right', marginTop: 8 },
 });

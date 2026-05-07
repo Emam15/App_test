@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Modal, TextInput, Alert,
@@ -6,27 +7,30 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../services/api';
 
-const INITIAL_CLASSES = [
-  { id: 1, code: 'CS101', name: 'Intro to Computer Science', doctor: 'Dr. Marcus Sterling', dept: 'Computer Science', students: 45, status: 'ACTIVE', color: '#2563eb' },
-  { id: 2, code: 'CS302', name: 'Data Structures & Algo', doctor: 'Dr. Sarah Jenkins', dept: 'Computer Science', students: 38, status: 'ACTIVE', color: '#059669' },
-  { id: 3, code: 'MTH500', name: 'Stochastic Processes', doctor: 'Dr. Lisa Ray', dept: 'Mathematics', students: 30, status: 'ACTIVE', color: '#7c3aed' },
-  { id: 4, code: 'ENG310', name: 'Advanced Robotics Lab', doctor: 'Dr. Sarah Jenkins', dept: 'Engineering', students: 45, status: 'PAUSED', color: '#d97706' },
-  { id: 5, code: 'ART105', name: 'UI/UX Architectural Systems', doctor: 'Prof. Elias Vance', dept: 'Visual Arts', students: 82, status: 'ACTIVE', color: '#db2777' },
-  { id: 6, code: 'BUS440', name: 'Global Market Analytics', doctor: 'Prof. Robert Chen', dept: 'Business', students: 110, status: 'CLOSED', color: '#64748b' },
-];
+// const INITIAL_CLASSES = [
+//   { id: 1, code: 'CS101', name: 'Intro to Computer Science', doctor: 'Dr. Marcus Sterling', dept: 'Computer Science', students: 45, status: 'ACTIVE', color: '#2563eb' },
+//   { id: 2, code: 'CS302', name: 'Data Structures & Algo', doctor: 'Dr. Sarah Jenkins', dept: 'Computer Science', students: 38, status: 'ACTIVE', color: '#059669' },
+//   { id: 3, code: 'MTH500', name: 'Stochastic Processes', doctor: 'Dr. Lisa Ray', dept: 'Mathematics', students: 30, status: 'ACTIVE', color: '#7c3aed' },
+//   { id: 4, code: 'ENG310', name: 'Advanced Robotics Lab', doctor: 'Dr. Sarah Jenkins', dept: 'Engineering', students: 45, status: 'PAUSED', color: '#d97706' },
+//   { id: 5, code: 'ART105', name: 'UI/UX Architectural Systems', doctor: 'Prof. Elias Vance', dept: 'Visual Arts', students: 82, status: 'ACTIVE', color: '#db2777' },
+//   { id: 6, code: 'BUS440', name: 'Global Market Analytics', doctor: 'Prof. Robert Chen', dept: 'Business', students: 110, status: 'CLOSED', color: '#64748b' },
+// ];
 
-const DOCTORS = ['Dr. Marcus Sterling', 'Dr. Sarah Jenkins', 'Dr. Lisa Ray', 'Prof. Elias Vance', 'Prof. Robert Chen'];
-const DEPTS = ['Computer Science', 'Mathematics', 'Engineering', 'Visual Arts', 'Business', 'Humanities'];
+//const DOCTORS = ['Dr. Marcus Sterling', 'Dr. Sarah Jenkins', 'Dr. Lisa Ray', 'Prof. Elias Vance', 'Prof. Robert Chen'];
+//const DEPTS = ['Computer Science', 'Mathematics', 'Engineering', 'Visual Arts', 'Business', 'Humanities'];
 
 export default function AdminClasses() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [classes, setClasses] = useState(INITIAL_CLASSES);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(false); // 👈 أضفها فوق
   const [createModal, setCreateModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [newClass, setNewClass] = useState({ code: '', name: '', doctor: '', dept: '' });
   const { colors: c, dark, toggleDark } = useTheme();
   const router = useRouter();
+
 
   const filtered = filterStatus === 'ALL' ? classes : classes.filter(cl => cl.status === filterStatus);
 
@@ -50,11 +54,58 @@ export default function AdminClasses() {
     Alert.alert('Success! 🎉', 'Class created successfully');
   };
 
-  const handleDelete = (id, name) => {
-    Alert.alert('Delete Class', `Are you sure you want to delete "${name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => setClasses(prev => prev.filter(c => c.id !== id)) },
-    ]);
+  const handleDeleteClass = async (classId, className) => {
+    Alert.alert(
+      'تأكيد الحذف',
+      `هل أنت متأكد من حذف "${className}"؟`,
+      [
+        { text: 'إلغاء', style: 'cancel' },
+        {
+          text: 'حذف',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // ✅ 1. احذف من الباكند الأول
+              await api.delete(`/classes/${classId}`);
+
+              // ✅ 2. بعد الحذف، جلب البيانات تاني من الباكند
+              await fetchClasses();
+
+              Alert.alert('نجاح', 'تم حذف الكلاس');
+            } catch (error) {
+              console.error('Delete error:', error);
+              Alert.alert('خطأ', error.response?.data?.message || 'فشل الحذف');
+            }
+          }
+        }
+      ]
+    );
+  };
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+  const fetchClasses = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/classes/my');
+      console.log('Full response:', response);  // 👈 شوف إيه اللي جاي
+      console.log('Response data:', response.data);
+      console.log('Response code:', response.data.code);
+
+      if (response.data.code === 'CLASSES_FETCHED') {
+        console.log('First class _id:', response.data.classes[0]?._id); // 👈 تتأكد
+
+        setClasses(response.data.classes);
+      }
+      else {
+        console.log('Code mismatch, expected CLASSES_FETCHED but got:', response.data.code);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('خطأ', 'فشل تحميل الكلاسات');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleToggleStatus = (id) => {
@@ -89,11 +140,11 @@ export default function AdminClasses() {
           </View>
           {[
             { icon: '🏠', label: 'Home', route: '/(admin)/home' },
-            { icon: '💬', label: 'Announcements' },
-            { icon: '👥', label: 'Users' },
-            { icon: '📚', label: 'Classes', active: true },
-            { icon: '📊', label: 'Reports' },
-            { icon: '⚙️', label: 'Settings' },
+            { icon: '💬', label: 'Announcements', route: '/(admin)/announcements' },
+            { icon: '👥', label: 'Users', route: '/(admin)/users' },
+            { icon: '📚', label: 'Classes', active: true, route: '/(admin)/classes' },
+            //{ icon: '📊', label: 'Reports' },
+            //  { icon: '⚙️', label: 'Settings' },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
@@ -204,7 +255,7 @@ export default function AdminClasses() {
 
         {/* Classes List */}
         {filtered.map((cls) => (
-          <View key={cls.id} style={[styles.classCard, { backgroundColor: c.card }]}>
+          <View key={cls._id} style={[styles.classCard, { backgroundColor: c.card }]}>
 
             {/* Card Top */}
             <View style={[styles.classCardTop, { backgroundColor: cls.color }]}>
@@ -237,7 +288,7 @@ export default function AdminClasses() {
 
                 <TouchableOpacity
                   style={[styles.toggleBtn, { backgroundColor: statusColor(cls.status).bg }]}
-                  onPress={() => handleToggleStatus(cls.id)}
+                  onPress={() => handleToggleStatus(cls._id)}
                 >
                   <Text style={[styles.toggleBtnText, { color: statusColor(cls.status).text }]}>
                     {cls.status === 'ACTIVE' ? '⏸ Pause' : cls.status === 'PAUSED' ? '▶️ Resume' : '🔄 Reopen'}
@@ -246,7 +297,7 @@ export default function AdminClasses() {
 
                 <TouchableOpacity
                   style={styles.deleteBtn}
-                  onPress={() => handleDelete(cls.id, cls.name)}
+                  onPress={() => handleDeleteClass(cls._id, cls.name)}
                 >
                   <Text style={styles.deleteBtnText}>🗑️</Text>
                 </TouchableOpacity>

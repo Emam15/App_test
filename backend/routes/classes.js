@@ -207,21 +207,23 @@ router.get("/my", authenticateToken, async (req, res) => {
   try {
     let classes;
 
-    if (req.user.role === "student") {
+    if (req.user.role === "admin" || req.user.role === "super_admin") {
+      // ✅ الأدمن يشوف كل الكلاسات
+      classes = await Class.find({})
+        .populate("instructor", "fullName email")
+        .sort({ createdAt: -1 });
+    } else if (req.user.role === "student") {
       classes = await Class.find({ students: req.user._id })
         .populate("instructor", "fullName email")
-        .sort({ createdAt: -1 })
-        .lean();
+        .sort({ createdAt: -1 });
     } else if (req.user.role === "instructor") {
       classes = await Class.find({ instructor: req.user._id })
         .populate("instructor", "fullName email")
-        .sort({ createdAt: -1 })
-        .lean();
+        .sort({ createdAt: -1 });
     } else {
       classes = await Class.find({})
         .populate("instructor", "fullName email")
-        .sort({ createdAt: -1 })
-        .lean();
+        .sort({ createdAt: -1 });
     }
 
     res.json({
@@ -231,13 +233,10 @@ router.get("/my", authenticateToken, async (req, res) => {
       classes,
     });
   } catch (err) {
-    res.status(500).json({
-      message: "Failed to fetch classes",
-      code: "INTERNAL_SERVER_ERROR",
-    });
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch classes" });
   }
 });
-
 // ============================================
 // GET CLASS DETAILS
 // ============================================

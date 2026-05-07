@@ -1,19 +1,24 @@
 import { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Modal, Alert,
+  TouchableOpacity, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
-//import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { router } from 'expo-router';
+
+
 
 export default function AdminHome() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { colors: c, toggleDark, dark } = useTheme();
   const router = useRouter();
+  const { logout, user } = useAuth();
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]}>
@@ -39,13 +44,6 @@ export default function AdminHome() {
             { icon: '📚', label: 'Classes', route: '/(admin)/classes' },
             { icon: '📊', label: 'Reports' },
             { icon: '⚙️', label: 'Settings' },
-
-            {
-              icon: '🚪', label: 'Logout', isLogout: true, action: async () => {
-                setMenuOpen(false);
-                await logout();
-              }
-            },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
@@ -53,18 +51,18 @@ export default function AdminHome() {
               onPress={() => {
                 setMenuOpen(false);
                 if (item.route) router.push(item.route);
-                if (item.action) item.action();
               }}
             >
               <Text style={styles.sidebarIcon}>{item.icon}</Text>
-              <Text style={[styles.sidebarLabel, { color: item.isLogout ? '#dc2626' : (item.active ? '#2563eb' : c.text) }]}></Text>
-              {item.label}
-
+              <Text style={[styles.sidebarLabel, { color: item.active ? '#2563eb' : c.text }]}>
+                {item.label}
+              </Text>
               {item.active && <View style={styles.sidebarDot} />}
             </TouchableOpacity>
           ))}
           <TouchableOpacity
             style={[styles.sidebarItem, { marginTop: 20, borderTopWidth: 1, borderTopColor: c.border }]}
+            onPress={handleLogout}
           >
             <Text style={styles.sidebarIcon}>🚪</Text>
             <Text style={[styles.sidebarLabel, { color: '#dc2626' }]}>Logout</Text>
@@ -85,7 +83,7 @@ export default function AdminHome() {
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={[styles.iconBtn, { backgroundColor: c.bg }]}
-            onPress={() => router.push('/(doctor)/announcements')} // السطر ده هو اللي هيعمل النقل
+            onPress={() => router.push('/hammad/NotofAdmin')} // السطر ده هو اللي هيعمل النقل
           >
             <Text style={styles.iconBtnText}>🔔</Text>
           </TouchableOpacity>
@@ -354,4 +352,4 @@ const styles = StyleSheet.create({
   userVal: { fontSize: 12 },
   progressBg: { height: 8, borderRadius: 4, overflow: 'hidden' },
   progressFill: { height: 8, borderRadius: 4 },
-});
+});         

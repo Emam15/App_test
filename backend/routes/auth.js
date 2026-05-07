@@ -645,5 +645,39 @@ router.post("/complete-profile", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "An error occurred during profile completion", code: "PROFILE_COMPLETION_ERROR", details: error.message });
   }
 });
+// ============================================
+// ADMIN: Get all users
+// ============================================
+router.get("/users", authenticateToken, authorizeRole("admin", "super_admin"), async (req, res) => {
+  try {
+    const users = await User.find({}).select("-password").sort({ createdAt: -1 });
+    res.json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ============================================
+// ADMIN: Delete user
+// ============================================
+router.delete("/users/:id", authenticateToken, authorizeRole("admin", "super_admin"), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // منع حذف الأدمن نفسه
+    if (id === req.user.id) {
+      return res.status(400).json({ message: "لا يمكنك حذف حسابك أثناء تسجيل الدخول" });
+    }
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;

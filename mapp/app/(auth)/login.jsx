@@ -19,12 +19,16 @@ import { router } from "expo-router";
 import { useAuth } from "../../context/AuthContext";
 
 export default function LoginScreen() {
+  console.log('LoginScreen rendered');  // 👈 أضف هذا
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
+    console.log('handleLogin called');  // 👈 أضف هذا
+
     if (!email || !password) {
       alert("الرجاء إدخال البريد الإلكتروني وكلمة المرور");
       return;
@@ -105,6 +109,12 @@ export default function LoginScreen() {
           onPress={() => router.push("/signup")}
         >
           <Text style={styles.signupText}>إنشاء حساب</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.googleLoginRedirect}
+          onPress={() => router.push('/(auth)/google-login')}
+        >
+          <Text style={styles.googleLoginRedirectText}>تسجيل الدخول بـ Google</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

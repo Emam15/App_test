@@ -32,6 +32,7 @@
 //   );
 // }
 
+
 // mapp/app/_layout.jsx
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../context/AuthContext';
@@ -61,9 +62,12 @@ export default function RootLayout() {
           <Stack.Screen name="(doctor)/announcements" options={{ title: 'الإعلانات' }} />
           <Stack.Screen name="(doctor)/class-details" options={{ title: 'تفاصيل المحاضرة' }} />
 
-          {/* ❌ احذف السطر ده - مفيش مجلد (admin)
-          <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-          */}
+          {/* Admin group */}
+          <Stack.Screen name="(admin)/home" options={{ title: 'لوحة التحكم' }} />
+          <Stack.Screen name="(admin)/announcements" options={{ title: 'الإعلانات' }} />
+          <Stack.Screen name="(admin)/classes" options={{ title: 'الكلاسات' }} />
+          <Stack.Screen name="(admin)/users" options={{ title: 'المستخدمين' }} />
+
 
           {/* hammad screens - اختياري */}
           <Stack.Screen name="hammad/NotIDOC" options={{ title: 'إشعارات' }} />

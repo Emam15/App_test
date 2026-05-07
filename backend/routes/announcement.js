@@ -6,6 +6,7 @@
 
 const express = require("express");
 const Announcement = require("../models/Announcement");
+const Comment = require("../models/Comment");  // 👈 أضف هذا السطر
 const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
@@ -31,6 +32,75 @@ router.get("/", authenticateToken, async (req, res) => {
     res.json({ announcements });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch announcements" });
+  }
+});
+
+// ============================================
+// COMMENTS ON GENERAL ANNOUNCEMENTS
+// ============================================
+
+// جلب تعليقات إعلان عام
+router.get("/:id/comments", authenticateToken, async (req, res) => {
+  try {
+    const comments = await Comment.find({ announcementId: req.params.id })
+      .populate("userId", "fullName email role")
+      .sort({ createdAt: 1 });
+    res.json({ success: true, comments });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// إضافة تعليق على إعلان عام
+router.post("/:id/comments", authenticateToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const announcementId = req.params.id;
+
+    const announcement = await Announcement.findById(announcementId);
+    if (!announcement) {
+      return res.status(404).json({ message: "Announcement not found" });
+    }
+
+    const comment = new Comment({
+      announcementId,
+      userId: req.user.id,
+      userRole: req.user.role,
+      text,
+    });
+
+    await comment.save();
+
+    // جلب التعليق مع بيانات المستخدم
+    const populatedComment = await Comment.findById(comment._id)
+      .populate("userId", "fullName email role");
+
+    res.status(201).json({ success: true, comment: populatedComment });
+  } catch (error) {
+    console.error("Add comment error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// حذف تعليق من إعلان عام
+router.delete("/:announcementId/comments/:commentId", authenticateToken, async (req, res) => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    const isAdmin = ["admin", "super_admin"].includes(req.user.role);
+    const isOwner = comment.userId.toString() === req.user.id;
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    await comment.deleteOne();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

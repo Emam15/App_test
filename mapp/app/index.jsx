@@ -13,9 +13,14 @@ export default function Index() {
     const token = await AsyncStorage.getItem('token');
     const userStr = await AsyncStorage.getItem('user');
 
+    console.log('Token exists:', !!token);  // 👈 أضف هذا
+    console.log('User exists:', !!userStr);  // 👈 أضف هذا
+
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
+        console.log('Parsed user:', user);  // 👈 أضف هذا
+
         if (user.role === 'student') {
           router.replace('/(student)/home');
         } else if (user.role === 'instructor' || user.role === 'doctor') {

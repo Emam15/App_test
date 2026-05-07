@@ -1,4 +1,3 @@
-// mapp/context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
@@ -18,6 +17,15 @@ export function AuthProvider({ children }) {
           const response = await api.get('/auth/me');
           const userData = response.data.user || response.data;
           setUser(userData);
+
+          // توجيه تلقائي للمستخدم الحالي
+          if (userData.role === 'admin') {
+            router.replace('/(admin)/home');
+          } else if (userData.role === 'student') {
+            router.replace('/(student)/home');
+          } else if (userData.role === 'instructor') {
+            router.replace('/(doctor)/home');
+          }
         }
       } catch (e) {
         await AsyncStorage.removeItem('token');
@@ -31,42 +39,31 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      console.log('========== LOGIN ATTEMPT ==========');
-      console.log('Email:', email);
-      console.log('Password length:', password?.length);
-      console.log('API URL:', api.defaults.baseURL);
-
       const response = await api.post('/auth/login', { email, password });
-      console.log('Response status:', response.status);
-      console.log('Response data:', response.data);
-
       const { token, user } = response.data;
 
-
-
-
-
-
-
-      if (token) {
+      if (token && user) {
         await AsyncStorage.setItem('token', token);
         await AsyncStorage.setItem('user', JSON.stringify(user));
         setUser(user);
+
+        // توجيه حسب الدور
+        if (user.role === 'admin') {
+          router.replace('/(admin)/home');
+        } else if (user.role === 'student') {
+          router.replace('/(student)/home');
+        } else if (user.role === 'instructor') {
+          router.replace('/(doctor)/home');
+        } else {
+          router.replace('/(auth)/login');
+        }
+
         return { success: true, role: user.role };
       }
-      return { success: false, message: 'Login failed' };
+      return { success: false, message: 'Invalid response from server' };
     } catch (error) {
-      console.log('========== LOGIN ERROR ==========');
-      console.log('Status:', error.response?.status);
-      console.log('Message:', error.response?.data?.message);
-      console.log('Code:', error.response?.data?.code);
-      console.log('Full error:', error.response?.data);
-
-
-      return {
-        success: false,
-        message: error.response?.data?.message || error.message || 'Login failed',
-      };
+      console.log('Login error:', error.response?.data || error.message);
+      return { success: false, message: error.response?.data?.message || 'Login failed' };
     }
   };
 

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+//محمود
+import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Modal, TextInput, Alert,
@@ -6,78 +7,85 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
-
-const INITIAL_CLASSES = [
-  {
-    id: 1,
-    code: 'CS101',
-    name: 'Intro to Computer Science',
-    section: 'Section A',
-    students: 45,
-    time: 'Mon/Wed 10:00 AM',
-    room: 'Room 304',
-    status: 'ACTIVE',
-    color: '#2563eb',
-    announcements: 3,
-  },
-  {
-    id: 2,
-    code: 'CS302',
-    name: 'Data Structures & Algo',
-    section: 'Section B',
-    students: 38,
-    time: 'Tue/Thu 02:00 PM',
-    room: 'Room 105',
-    status: 'ACTIVE',
-    color: '#059669',
-    announcements: 1,
-  },
-  {
-    id: 3,
-    code: 'CS450',
-    name: 'Web Development Capstone',
-    section: 'Section A',
-    students: 42,
-    time: 'Fri 09:00 AM',
-    room: 'Room 201',
-    status: 'PAUSED',
-    color: '#d97706',
-    announcements: 0,
-  },
-];
+import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function DoctorClasses() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [classes, setClasses] = useState(INITIAL_CLASSES);
+  const [classes, setClasses] = useState([]);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [createModal, setCreateModal] = useState(false);
   const [newClass, setNewClass] = useState({ code: '', name: '', section: '', time: '', room: '' });
   const { colors: c, dark, toggleDark } = useTheme();
   const router = useRouter();
 
-  const handleCreate = () => {
+  // جلب الكلاسات من الباكند
+  const fetchClasses = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/classes/my');
+      console.log('Fetched classes:', response.data);
+
+      if (response.data.code === 'CLASSES_FETCHED') {
+        setClasses(response.data.classes);
+      } else {
+        setClasses([]);
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      Alert.alert('Error', 'Failed to load classes');
+      setClasses([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+  // جلب الكلاسات عند فتح الصفحة
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  // إنشاء كلاس جديد
+  const handleCreate = async () => {
     if (!newClass.code || !newClass.name) {
       Alert.alert('Error', 'Please fill in Code and Name at least');
       return;
     }
-    const created = {
-      id: Date.now(),
-      code: newClass.code,
-      name: newClass.name,
-      section: newClass.section || 'Section A',
-      students: 0,
-      time: newClass.time || 'TBD',
-      room: newClass.room || 'TBD',
-      status: 'ACTIVE',
-      color: '#7c3aed',
-      announcements: 0,
-    };
-    setClasses(prev => [...prev, created]);
-    setNewClass({ code: '', name: '', section: '', time: '', room: '' });
-    setCreateModal(false);
-    Alert.alert('Success! 🎉', `Class "${created.name}" created successfully`);
+
+    try {
+      console.log('Sending data:', {
+        name: newClass.name,
+        courseCode: newClass.code.toUpperCase(),
+        section: newClass.section || 'Section A',
+        semester: 'Spring',
+        year: 2026,
+      });
+
+      const response = await api.post('/classes', {
+        name: newClass.name,
+        courseCode: newClass.code.toUpperCase(),  // لازم uppercase
+        section: newClass.section || 'Section A',
+        semester: 'Spring',
+        year: 2026,
+        description: '',  // أضف description فارغ
+      });
+
+      console.log('Create response:', response.data);
+
+      if (response.status === 201) {
+        Alert.alert('Success', `Class created!\n\nJoin Code: ${response.data.class.joinCode}`);
+        setCreateModal(false);
+        setNewClass({ code: '', name: '', section: '', time: '', room: '' });
+        fetchClasses(); // تحديث القائمة
+      }
+    } catch (error) {
+      console.error('Create class error:', error.response?.data);
+      Alert.alert('Error', error.response?.data?.message || 'Failed to create class');
+    }
   };
 
-  const handleDelete = (id, name) => {
+  // حذف كلاس
+  const handleDelete = async (id, name) => {
     Alert.alert(
       'Delete Class',
       `Are you sure you want to delete "${name}"?`,
@@ -85,11 +93,28 @@ export default function DoctorClasses() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete', style: 'destructive',
-          onPress: () => setClasses(prev => prev.filter(c => c.id !== id)),
+          onPress: async () => {
+            try {
+              await api.delete(`/classes/${id}`);
+              Alert.alert('Success', 'Class deleted successfully');
+              fetchClasses(); // تحديث القائمة
+            } catch (error) {
+              Alert.alert('Error', error.response?.data?.message || 'Failed to delete class');
+            }
+          },
         },
       ]
     );
   };
+
+  // عرض شاشة التحميل
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.safe, { backgroundColor: c.bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: c.text }}>Loading classes...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]}>
@@ -113,7 +138,7 @@ export default function DoctorClasses() {
             { icon: '👥', label: 'Students' },
             { icon: '📅', label: 'Schedule' },
             { icon: '📊', label: 'Reports' },
-            { icon: '💬', label: 'Announcements', route: '/(doctor)/announcements' },
+            // { icon: '💬', label: 'Announcements', route: '/(doctor)/announcements' },
           ].map((item, i) => (
             <TouchableOpacity
               key={i}
@@ -130,7 +155,13 @@ export default function DoctorClasses() {
               {item.active && <View style={styles.sidebarDot} />}
             </TouchableOpacity>
           ))}
-          <TouchableOpacity style={[styles.sidebarItem, { marginTop: 20, borderTopWidth: 1, borderTopColor: c.border }]}>
+          <TouchableOpacity
+            style={[styles.sidebarItem, { marginTop: 20, borderTopWidth: 1, borderTopColor: c.border }]}
+            onPress={() => {
+              // Logout logic هنا
+              router.replace('/(auth)/login');
+            }}
+          >
             <Text style={styles.sidebarIcon}>🚪</Text>
             <Text style={[styles.sidebarLabel, { color: '#dc2626' }]}>Logout</Text>
           </TouchableOpacity>
@@ -198,74 +229,77 @@ export default function DoctorClasses() {
         <View style={styles.banner}>
           <View>
             <Text style={styles.bannerTitle}>My Classes</Text>
-            <Text style={styles.bannerSub}>{classes.length} Classes • {classes.reduce((a, b) => a + b.students, 0)} Total Students</Text>
+            <Text style={styles.bannerSub}>
+              {classes.length} Classes • {classes.reduce((a, b) => a + (b.students?.length || 0), 0)} Total Students
+            </Text>
           </View>
           <TouchableOpacity style={styles.createBtn} onPress={() => setCreateModal(true)}>
             <Text style={styles.createBtnText}>+ New Class</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Classes List */}
-        {classes.map((cls) => (
-          <View key={cls.id} style={[styles.classCard, { backgroundColor: c.card }]}>
-
-            {/* Card Header */}
-            <View style={[styles.classCardHeader, { backgroundColor: cls.color }]}>
-              <View>
-                <Text style={styles.classCode}>{cls.code}</Text>
-                <Text style={styles.classSection}>{cls.section}</Text>
-              </View>
-              <View style={[styles.statusBadge, {
-                backgroundColor: cls.status === 'ACTIVE' ? '#dcfce7' : '#fef3c7'
-              }]}>
-                <Text style={[styles.statusText, {
-                  color: cls.status === 'ACTIVE' ? '#15803d' : '#d97706'
-                }]}>{cls.status}</Text>
-              </View>
-            </View>
-
-            {/* Card Body */}
-            <View style={styles.classCardBody}>
-              <Text style={[styles.className, { color: c.text }]}>{cls.name}</Text>
-
-              <View style={styles.metaRow}>
-                <Text style={[styles.meta, { color: c.subText }]}>👥 {cls.students} Students</Text>
-                <Text style={[styles.meta, { color: c.subText }]}>🕐 {cls.time}</Text>
-                <Text style={[styles.meta, { color: c.subText }]}>📍 {cls.room}</Text>
-              </View>
-
-              {cls.announcements > 0 && (
-                <View style={styles.annBadge}>
-                  <Text style={styles.annBadgeText}>📢 {cls.announcements} New Announcements</Text>
-                </View>
-              )}
-
-              {/* Actions */}
-              <View style={styles.actionsRow}>
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => router.push('/(doctor)/class-details')}
-                >
-                  <Text style={styles.actionBtnText}>Open Class</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.actionBtnSecondary, { borderColor: c.border }]}
-                  onPress={() => router.push('/(doctor)/class-details')}
-                >
-                  <Text style={[styles.actionBtnSecondaryText, { color: c.text }]}>👥 Students</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.deleteBtn}
-                  onPress={() => handleDelete(cls.id, cls.name)}
-                >
-                  <Text style={styles.deleteBtnText}>🗑️</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        {/* Classes List - من الباكند */}
+        {classes.length === 0 ? (
+          <View style={[styles.emptyContainer, { backgroundColor: c.card }]}>
+            <Text style={[styles.emptyText, { color: c.text }]}>No classes yet</Text>
+            <Text style={[styles.emptySubText, { color: c.subText }]}>Tap + New Class to create your first class</Text>
           </View>
-        ))}
+        ) : (
+          classes.map((cls) => (
+            <View key={cls._id} style={[styles.classCard, { backgroundColor: c.card }]}>
+
+              {/* Card Header */}
+              <View style={[styles.classCardHeader, { backgroundColor: cls.color || '#2563eb' }]}>
+                <View>
+                  <Text style={styles.classCode}>{cls.courseCode || cls.code}</Text>
+                  <Text style={styles.classSection}>{cls.section || 'Section A'}</Text>
+                </View>
+                <View style={[styles.statusBadge, {
+                  backgroundColor: cls.isActive !== false ? '#dcfce7' : '#fef3c7'
+                }]}>
+                  <Text style={[styles.statusText, {
+                    color: cls.isActive !== false ? '#15803d' : '#d97706'
+                  }]}>
+                    {cls.isActive !== false ? 'ACTIVE' : 'INACTIVE'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Card Body */}
+              <View style={styles.classCardBody}>
+                <Text style={[styles.className, { color: c.text }]}>{cls.name}</Text>
+                <View style={styles.metaRow}>
+                  <View style={styles.metaItem}>
+                    <Text style={[styles.metaIcon, { color: c.subText }]}>👥</Text>
+                    <Text style={[styles.metaValue, { color: c.subText }]}>{cls.students?.length || 0}</Text>
+                  </View>
+                  <View style={styles.metaItem}>
+                    <Text style={[styles.metaIcon, { color: c.subText }]}>🔑</Text>
+                    <Text style={[styles.metaValue, { color: '#2563eb', fontWeight: 'bold', fontFamily: 'monospace' }]}>
+                      {cls.joinCode}
+                    </Text>
+                  </View>
+                </View>
+                {/* Actions */}
+                <View style={styles.actionsRow}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => router.push(`/(doctor)/class-details?id=${cls._id}`)}
+                  >
+                    <Text style={styles.actionBtnText}>Open Class</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={() => handleDelete(cls._id, cls.name)}
+                  >
+                    <Text style={styles.deleteBtnText}>🗑️</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ))
+        )}
 
         <View style={{ height: 20 }} />
       </ScrollView>
@@ -325,8 +359,10 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 11, fontWeight: '700' },
   classCardBody: { padding: 16 },
   className: { fontSize: 16, fontWeight: '800', marginBottom: 10 },
-  metaRow: { gap: 6, marginBottom: 12 },
-  meta: { fontSize: 13 },
+  mmetaRow: { flexDirection: 'row', gap: 16, marginBottom: 12 },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaIcon: { fontSize: 14 },
+  metaValue: { fontSize: 13 },
   annBadge: {
     backgroundColor: '#eff6ff', borderRadius: 8,
     paddingHorizontal: 10, paddingVertical: 6, marginBottom: 12,
@@ -349,4 +385,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fee2e2', alignItems: 'center', justifyContent: 'center',
   },
   deleteBtnText: { fontSize: 18 },
+  emptyContainer: {
+    padding: 40,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });

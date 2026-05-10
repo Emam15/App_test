@@ -5,7 +5,7 @@
  */
 
 const express = require("express");
-const Announcement = require("../models/Announcement");
+const Announcement = require('../models/announcement');
 const Comment = require("../models/Comment");  // 👈 أضف هذا السطر
 const { authenticateToken } = require("../middleware/auth");
 

@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 👇 غيرها لـ IP جهازك اللي ظهر في سيرفر الباكند
 //const API_BASE_URL = 'https://struck-scarecrow-chimp.ngrok-free.dev';
-const API_BASE_URL = 'http://192.168.1.14:5000/api';
+const API_BASE_URL = 'https://university-academic-productivity-management-plat-production.up.railway.app/api';
 //const API_BASE_URL = ' https://struck-scarecrow-chimp.ngrok-free.dev';
 const api = axios.create({
     baseURL: API_BASE_URL,

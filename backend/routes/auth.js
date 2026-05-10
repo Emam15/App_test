@@ -392,7 +392,7 @@ router.post("/login", async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password", code: "INVALID_CREDENTIALS" });
     }
-    if (!user.isEmailVerified) {
+    if (!user.isEmailVerified && user.role !== 'instructor') {
       return res.status(403).json({ message: "Please verify your email first", code: "EMAIL_NOT_VERIFIED" });
     }
     const isMatch = await bcrypt.compare(password, user.password);

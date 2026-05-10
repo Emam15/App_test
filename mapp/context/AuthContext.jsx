@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+// mapp/context/AuthContext.jsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import api from '../services/api';
@@ -45,6 +46,9 @@ export function AuthProvider({ children }) {
       if (token && user) {
         await AsyncStorage.setItem('token', token);
         await AsyncStorage.setItem('user', JSON.stringify(user));
+
+        console.log('✅ Token saved:', token.substring(0, 30) + '...');
+
         setUser(user);
 
         // توجيه حسب الدور

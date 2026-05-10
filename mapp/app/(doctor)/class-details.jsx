@@ -3,13 +3,16 @@ import React, { useState, useEffect } from 'react';
 
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Modal, TextInput, Alert,
+  TouchableOpacity, Modal, TextInput, Alert, Image, FlatList
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocalSearchParams } from 'expo-router';
 import api from '../../services/api';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+
 const INITIAL_STUDENTS = [
   { id: 1, name: 'Ahmed Mohamed', studentId: '20240001', grade: 'B+', attendance: '92%' },
   { id: 2, name: 'Sara Ali', studentId: '20240002', grade: 'A', attendance: '98%' },
@@ -33,13 +36,29 @@ export default function DoctorClassDetails() {
   const [material, setMaterial] = useState(INITIAL_MATERIAL);
   const [students, setStudents] = useState(INITIAL_STUDENTS);
 
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null); // ✅ اسم واضح
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const { id } = useLocalSearchParams(); // classId من الرابط
   const [loading, setLoading] = useState(true);
+  const fetchUploadedFiles = async () => {
+    try {
+      const response = await api.get(`/class-materials/class/${id}`);
+      if (response.data.success) {
+        setUploadedFiles(response.data.materials);
+      }
+    } catch (error) {
+      console.error('Fetch files error:', error);
+    }
+  };
 
   useEffect(() => {
     if (id) {
       fetchAnnouncements();
+      fetchUploadedFiles();
     }
   }, [id]);
 
@@ -55,12 +74,69 @@ export default function DoctorClassDetails() {
       setLoading(false);
     }
   };
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+    }
+  };
 
+  const pickDocument = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/pdf',
+    });
+    if (!result.canceled) {
+      setSelectedFile(result.assets[0]);
+    }
+  };
 
+  const uploadMaterial = async () => {
+    if (!selectedImage && !selectedFile) {
+      Alert.alert('تنبيه', 'الرجاء اختيار صورة أو ملف');
+      return;
+    }
 
+    const formData = new FormData();
+    if (selectedImage) {
+      formData.append('file', {
+        uri: selectedImage.uri,
+        type: 'image/jpeg',
+        name: 'image.jpg',
+      });
+    } else if (selectedFile) {
+      formData.append('file', {
+        uri: selectedFile.uri,
+        type: 'application/pdf',
+        name: selectedFile.name,
+      });
+    }
+    formData.append('classId', id);
 
+    try {
+      console.log('📤 Uploading to:', '/class-materials');
+      console.log('📎 FormData:', formData);
 
+      const response = await api.post('/class-materials', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      fetchUploadedFiles(); // ✅ أضف هذا السطر
 
+      console.log('✅ Upload success:', response.data);
+      Alert.alert('نجاح', 'تم رفع الملف');
+      setUploadModalVisible(false);
+      setSelectedImage(null);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error('❌ Upload error full:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      Alert.alert('خطأ', error.response?.data?.message || 'فشل رفع الملف');
+    }
+  };
   // Modals
   const [annModal, setAnnModal] = useState(false);
   const [materialModal, setMaterialModal] = useState(false);
@@ -187,6 +263,12 @@ export default function DoctorClassDetails() {
       console.error(error);
       Alert.alert('خطأ', 'فشل إضافة التعليق');
     }
+  };
+
+  const handleCancelUpload = () => {
+    setUploadModalVisible(false);
+    setSelectedImage(null);
+    setSelectedFile(null);
   };
 
   return (
@@ -352,6 +434,9 @@ export default function DoctorClassDetails() {
           { key: 'announcements', label: '📢 Posts' },
           { key: 'material', label: '📁 Material' },
           { key: 'students', label: '👥 Students' },
+          { key: 'files', label: '📁 Files' },
+
+
         ].map((tab) => (
           <TouchableOpacity
             key={tab.key}
@@ -387,7 +472,7 @@ export default function DoctorClassDetails() {
                   style={styles.deleteAnnBtn}
                   onPress={() => handleDeleteAnn(ann._id)}
                 >
-                  <Text style={styles.deleteAnnText}>🗑️ Delete</Text>
+                  <Text style={styles.deleteAnnText}>🗑 Delete</Text>
                 </TouchableOpacity>
 
 
@@ -477,7 +562,7 @@ export default function DoctorClassDetails() {
                   </View>
                 </View>
                 <TouchableOpacity onPress={() => handleDeleteMaterial(file.id)}>
-                  <Text style={styles.deleteIcon}>🗑️</Text>
+                  <Text style={styles.deleteIcon}>🗑</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -518,11 +603,67 @@ export default function DoctorClassDetails() {
                     style={{ flex: 0.5, alignItems: 'center' }}
                     onPress={() => handleDeleteStudent(s.id, s.name)}
                   >
-                    <Text style={{ fontSize: 16 }}>🗑️</Text>
+                    <Text style={{ fontSize: 16 }}>🗑</Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
+          </View>
+        )}
+
+
+        {activeTab === 'files' && (
+          <View>
+            <TouchableOpacity style={styles.addBtn} onPress={() => setUploadModalVisible(true)}>
+              <Text style={styles.addBtnText}>+ رفع ملف جديد</Text>
+            </TouchableOpacity>
+            {/* ✅ عرض الملفات اللي اترفعت (هنا) */}
+            <FlatList
+              data={uploadedFiles}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <View style={styles.fileCard}>
+                  <Text style={styles.fileName}>{item.fileName}</Text>
+                  <TouchableOpacity onPress={() => Alert.alert('فتح', item.fileUrl)}>
+                    <Text style={styles.downloadBtn}>📥 عرض</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            />
+
+            <Modal visible={uploadModalVisible} transparent animationType="slide" onRequestClose={() => setUploadModalVisible(false)}>
+              <View style={styles.modalBg}>
+                <View style={styles.modalCard}>
+                  <Text style={styles.modalTitle}>رفع ملف</Text>
+
+                  {/* قسم اختيار الملفات */}
+                  <View style={styles.pickerContainer}>
+                    <TouchableOpacity style={styles.pickerBtn} onPress={pickImage}>
+                      <Text style={styles.pickerBtnText}>📷 اختيار صورة</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.pickerBtn} onPress={pickDocument}>
+                      <Text style={styles.pickerBtnText}>📁 اختيار PDF</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* معاينة الملف المختار */}
+                  {selectedImage && <Image source={{ uri: selectedImage.uri }} style={styles.previewImage} />}
+                  {selectedFile && <Text style={styles.previewText}>📄 {selectedFile.name}</Text>}
+
+                  {/* قسم الأزرار الرئيسية */}
+                  <View style={styles.actionsContainer}>
+                    <TouchableOpacity style={styles.uploadBtn} onPress={uploadMaterial}>
+                      <Text style={styles.uploadBtnText}>📤 رفع الملف</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.cancelBtn} onPress={() => setUploadModalVisible(false)}>
+                      <Text style={styles.cancelBtnText}>✖️ إلغاء</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
           </View>
         )}
 
@@ -604,4 +745,88 @@ const styles = StyleSheet.create({
   replyBtn: { fontSize: 11, color: '#2563eb', fontWeight: '600' },
   replyItem: { marginTop: 8, padding: 8, borderRadius: 8 },
   cancelReply: { fontSize: 12, color: '#dc2626', textAlign: 'right', marginTop: 8 },
+  // داخل StyleSheet.create
+  pickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 20,
+  },
+  pickerBtn: {
+    flex: 1,
+    backgroundColor: '#e0e7ff',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  pickerBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  actionsContainer: {
+    flexDirection: 'column',
+    gap: 10,
+    marginTop: 10,
+  },
+  uploadBtn: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  uploadBtnText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  cancelBtn: {
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  cancelBtnText: {
+    color: '#dc2626',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  previewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginVertical: 12,
+  },
+  previewText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#4b5563',
+    marginVertical: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#1f2937',
+  },
+  modalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    width: '85%',
+    maxWidth: 350,
+    elevation: 5,
+  },
 });

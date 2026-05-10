@@ -3,6 +3,8 @@ require("dotenv").config({ path: __dirname + "/../config/.env" });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+//const { Expo } = require('expo-server-sdk');
+
 
 const authRoutes = require("./routes/auth");
 const announcementRoutes = require("./routes/announcement");
@@ -11,6 +13,8 @@ const attendanceRoutes = require("./routes/attendance");
 const mobileRoutes = require("./routes/mobile");  // 👈 استدعاء الـ mobile routes
 const classAnnouncementRoutes = require("./routes/class-announcements");
 const commentRoutes = require("./routes/comments");
+const adminRoutes = require('./routes/admin');
+const classMaterialRoutes = require('./routes/class-materials');
 
 
 const app = express();  // ✅ لازم يكون قبل ما تستخدم app
@@ -46,6 +50,12 @@ app.use("/api/classes", classesRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/mobile", mobileRoutes);  // ✅ بعد ما عرفت app
 app.use("/api/comments", commentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/class-materials', classMaterialRoutes);
+
+
+
+
 // ============================================
 // DATABASE CONNECTION & SERVER INITIALIZATION
 // ============================================

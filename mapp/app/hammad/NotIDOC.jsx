@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, Text, View, FlatList, SafeAreaView,
-  TouchableOpacity, TextInput, Alert, ActivityIndicator
+  TouchableOpacity, TextInput, Alert, ActivityIndicator,
+  Image
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import api from '../../services/api';
 
 export default function TeacherPortal() {
@@ -10,6 +13,8 @@ export default function TeacherPortal() {
   const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -20,7 +25,6 @@ export default function TeacherPortal() {
       setLoading(true);
       const response = await api.get('/announcements');
 
-      // جلب التعليقات لكل إعلان
       const announcementsWithComments = await Promise.all(
         (response.data.announcements || []).map(async (ann) => {
           try {
@@ -41,20 +45,86 @@ export default function TeacherPortal() {
     }
   };
 
+  // اختيار صورة من المعرض
+  const pickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        Alert.alert('تنبيه', 'نحتاج إلى صلاحية الوصول إلى المعرض');
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0]);
+        setSelectedDocument(null);
+        Alert.alert('نجاح', 'تم اختيار الصورة');
+      }
+    } catch (error) {
+      Alert.alert('خطأ', 'حدث خطأ أثناء اختيار الصورة');
+    }
+  };
+
+  // اختيار ملف PDF
+  const pickDocument = async () => {
+    try {
+      let result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled) {
+        setSelectedDocument(result.assets[0]);
+        setSelectedImage(null);
+        Alert.alert('نجاح', 'تم اختيار الملف');
+      }
+    } catch (error) {
+      Alert.alert('خطأ', 'حدث خطأ أثناء اختيار الملف');
+    }
+  };
+
   const handleReply = async (announcementId) => {
-    if (!replyText.trim()) {
-      Alert.alert('تنبيه', 'الرجاء كتابة رد');
+    if (!replyText.trim() && !selectedImage && !selectedDocument) {
+      Alert.alert('تنبيه', 'الرجاء كتابة رد أو إرفاق صورة أو ملف');
       return;
     }
 
     try {
-      // ✅ استخدم endpoint الإعلانات العامة
-      await api.post(`/announcements/${announcementId}/comments`, {
-        text: replyText,
+      const formData = new FormData();
+      formData.append('text', replyText);
+
+      if (selectedImage) {
+        formData.append('file', {
+          uri: selectedImage.uri,
+          type: selectedImage.mimeType || 'image/jpeg',
+          name: selectedImage.fileName || 'image.jpg',
+        });
+        formData.append('fileType', 'image');
+      }
+
+      if (selectedDocument) {
+        formData.append('file', {
+          uri: selectedDocument.uri,
+          type: selectedDocument.mimeType || 'application/pdf',
+          name: selectedDocument.name || 'document.pdf',
+        });
+        formData.append('fileType', 'pdf');
+      }
+
+      await api.post(`/announcements/${announcementId}/comments`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       setReplyText('');
-      fetchAnnouncements(); // تحديث الإعلانات والتعليقات
+      setSelectedImage(null);
+      setSelectedDocument(null);
+      setSelectedId(null);
+      fetchAnnouncements();
       Alert.alert('نجاح', 'تم إضافة ردك');
     } catch (error) {
       console.error('Reply error:', error);
@@ -88,35 +158,78 @@ export default function TeacherPortal() {
               {new Date(item.createdAt).toLocaleString()}
             </Text>
 
-            {/* التعليقات */}
             <View style={styles.commentsSection}>
               <Text style={styles.commentsTitle}>💬 التعليقات ({item.comments?.length || 0})</Text>
               {item.comments?.map((comment) => (
                 <View key={comment._id} style={styles.commentItem}>
                   <Text style={styles.commentUser}>{comment.userId?.fullName}</Text>
                   <Text style={styles.commentText}>{comment.text}</Text>
+                  {comment.fileUrl && comment.fileType === 'image' && (
+                    <Image source={{ uri: comment.fileUrl }} style={styles.commentImage} />
+                  )}
+                  {comment.fileUrl && comment.fileType === 'pdf' && (
+                    <TouchableOpacity onPress={() => Alert.alert('PDF', 'سيتم فتح الملف قريباً')}>
+                      <Text style={styles.pdfLink}>📄 تحميل الملف</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
             </View>
 
-            {/* الرد */}
             {selectedId === item._id ? (
               <View style={styles.replyContainer}>
+                {/* معاينة الصورة المختارة */}
+                {selectedImage && (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
+                    <TouchableOpacity onPress={() => setSelectedImage(null)}>
+                      <Text style={styles.removeImage}>✖️ إزالة الصورة</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* معاينة الملف المختار */}
+                {selectedDocument && (
+                  <View style={styles.documentPreviewContainer}>
+                    <Text style={styles.documentName}>📄 {selectedDocument.name}</Text>
+                    <TouchableOpacity onPress={() => setSelectedDocument(null)}>
+                      <Text style={styles.removeImage}>✖️ إزالة الملف</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
                 <TextInput
                   style={styles.input}
                   placeholder="اكتب ردك..."
                   value={replyText}
                   onChangeText={setReplyText}
                 />
-                <TouchableOpacity
-                  style={styles.sendBtn}
-                  onPress={() => handleReply(item._id)}
-                >
-                  <Text style={styles.sendBtnText}>إرسال</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSelectedId(null)}>
-                  <Text style={styles.cancelBtn}>إلغاء</Text>
-                </TouchableOpacity>
+
+                <View style={styles.replyActions}>
+                  <TouchableOpacity style={styles.imageBtn} onPress={pickImage}>
+                    <Text style={styles.imageBtnText}>📷 صورة</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.documentBtn} onPress={pickDocument}>
+                    <Text style={styles.documentBtnText}>📁 PDF</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.sendBtn}
+                    onPress={() => handleReply(item._id)}
+                  >
+                    <Text style={styles.sendBtnText}>إرسال</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => {
+                    setSelectedId(null);
+                    setSelectedImage(null);
+                    setSelectedDocument(null);
+                    setReplyText('');
+                  }}>
+                    <Text style={styles.cancelBtn}>إلغاء</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ) : (
               <TouchableOpacity onPress={() => setSelectedId(item._id)}>
@@ -144,10 +257,22 @@ const styles = StyleSheet.create({
   commentItem: { backgroundColor: '#f0f0f0', padding: 8, borderRadius: 8, marginBottom: 6 },
   commentUser: { fontSize: 11, fontWeight: 'bold', marginBottom: 2 },
   commentText: { fontSize: 12 },
+  commentImage: { width: 100, height: 100, borderRadius: 8, marginTop: 5 },
+  pdfLink: { fontSize: 11, color: '#2563eb', marginTop: 5 },
   replyContainer: { marginTop: 10, gap: 8 },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 10, fontSize: 14 },
-  sendBtn: { backgroundColor: '#2563eb', padding: 10, borderRadius: 8, alignItems: 'center' },
+  replyActions: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
+  imageBtn: { backgroundColor: '#e0e0e0', padding: 8, borderRadius: 8 },
+  imageBtnText: { fontSize: 12 },
+  documentBtn: { backgroundColor: '#e0e0e0', padding: 8, borderRadius: 8 },
+  documentBtnText: { fontSize: 12 },
+  sendBtn: { backgroundColor: '#2563eb', padding: 10, borderRadius: 8, alignItems: 'center', flex: 1 },
   sendBtnText: { color: 'white', fontWeight: 'bold' },
   cancelBtn: { color: '#dc2626', textAlign: 'center', marginTop: 6 },
   replyBtnText: { color: '#2563eb', fontSize: 12, marginTop: 8, textAlign: 'right' },
+  imagePreviewContainer: { alignItems: 'center', marginBottom: 8 },
+  imagePreview: { width: 80, height: 80, borderRadius: 8 },
+  documentPreviewContainer: { alignItems: 'center', marginBottom: 8, padding: 8, backgroundColor: '#f0f0f0', borderRadius: 8 },
+  documentName: { fontSize: 12, color: '#333' },
+  removeImage: { color: '#dc2626', fontSize: 11, marginTop: 4 },
 });

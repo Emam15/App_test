@@ -1,7 +1,11 @@
 const mongoose = require("mongoose");
 
+
 const classAnnouncementSchema = new mongoose.Schema(
     {
+        fileUrl: { type: String, default: null },
+        fileType: { type: String, enum: ['image', 'pdf', null], default: null },
+
         classId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Class",
@@ -23,7 +27,8 @@ const classAnnouncementSchema = new mongoose.Schema(
             required: true,
         },
     },
-    { timestamps: true }
+    { timestamps: true },
+
 );
 
 module.exports = mongoose.model("ClassAnnouncement", classAnnouncementSchema);

@@ -40,7 +40,7 @@ export default function AdminHome() {
           {[
             { icon: '🏠', label: 'Home', active: true, route: '/(admin)/home' },
             { icon: '💬', label: 'Announcements', route: '/(admin)/announcements' },
-            { icon: '👥', label: 'Users' },
+            //{ icon: '👥', label: 'Users' },
             { icon: '📚', label: 'Classes', route: '/(admin)/classes' },
             { icon: '📊', label: 'Reports' },
             { icon: '⚙️', label: 'Settings' },

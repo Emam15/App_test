@@ -10,6 +10,7 @@ const Comment = require("../models/Comment");  // 👈 أضف هذا السطر
 const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
+//const { sendNotificationToRole, sendNotificationToUser } = require('./notifications');
 
 // Get all announcements visible to the current user
 router.get("/", authenticateToken, async (req, res) => {
@@ -133,6 +134,15 @@ router.post("/", authenticateToken, async (req, res) => {
         stack: err.stack,
       });
   }
+
+  const targetRoles = visibleTo || ['student'];
+  // await sendNotificationToRole(
+  //   targetRoles,
+  //   title,
+  //   message.substring(0, 100),
+  //   { type: 'announcement', announcementId: announcement._id }
+  // );
+
 });
 
 // Admins: Delete announcement

@@ -24,12 +24,12 @@ export default function SignupScreen() {
   // 🔍 دالة تحديد الدور بناءً على صيغة الإيميل
   const getRoleFromEmail = (email) => {
     // الدكتور: الإيميل بيبدا بحرفين على الاقل ومفيش ارقام
-    // مثال: dr.ahmed@fci.cu.edu.eg , mohamed.ali@fci.cu.edu.eg
-    const doctorPattern = /^[a-zA-Z.]+@fci\.cu\.edu\.eg$/;
+    // مثال: dr.ahmed@sci.cu.edu.eg , mohamed.ali@sci.cu.edu.eg
+    const doctorPattern = /^[a-zA-Z.]+@sci\.cu\.edu\.eg$/;
 
     // الطالب: الإيميل فيه ارقام (رقم جلوس او ID)
-    // مثال: 20231145@std.fci.cu.edu.eg , student123@std.fci.cu.edu.eg
-    const studentPattern = /@std\.fci\.cu\.edu\.eg$/;
+    // مثال: 20231145@std.sci.cu.edu.eg , student123@std.sci.cu.edu.eg
+    const studentPattern = /@std\.sci\.cu\.edu\.eg$/;
 
     if (studentPattern.test(email)) {
       return 'student';
@@ -50,7 +50,7 @@ export default function SignupScreen() {
     } else if (role === 'doctor') {
       return true;
     } else {
-      alert("البريد الإلكتروني غير صحيح. استخدم:\n• للطلاب: username@std.fci.cu.edu.eg (يجب وجود أرقام)\n• للدكاترة: name@fci.cu.edu.eg (بدون أرقام)");
+      alert("البريد الإلكتروني غير صحيح. استخدم:\n• للطلاب: username@std.sci.cu.edu.eg (يجب وجود أرقام)\n• للدكاترة: name@sci.cu.edu.eg (بدون أرقام)");
       return false;
     }
   };
@@ -122,16 +122,16 @@ export default function SignupScreen() {
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>📌 ملاحظة:</Text>
           <Text style={styles.infoText}>
-            • الطلاب: بريد يحتوي على أرقام وينتهي بـ @std.fci.cu.edu.eg
+            • الطلاب: بريد يحتوي على أرقام وينتهي بـ @std.sci.cu.edu.eg
           </Text>
           <Text style={styles.infoText}>
-            • الدكاترة: بريد بدون أرقام وينتهي بـ @fci.cu.edu.eg
+            • الدكاترة: بريد بدون أرقام وينتهي بـ @sci.cu.edu.eg
           </Text>
           <Text style={styles.infoExample}>
-            مثال طالب: 20231145@std.fci.cu.edu.eg
+            مثال طالب: 20231145@std.sci.cu.edu.eg
           </Text>
           <Text style={styles.infoExample}>
-            مثال دكتور: ahmed.ali@fci.cu.edu.eg
+            مثال دكتور: ahmed.ali@sci.cu.edu.eg
           </Text>
         </View>
 

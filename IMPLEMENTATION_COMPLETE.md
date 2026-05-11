@@ -361,7 +361,7 @@ Response (200): {
 - Faculty of Medicine (med)
 - Faculty of Pharmacy (pharma)
 - Faculty of Commerce (foc)
-- Faculty of Computers & AI (fci)
+- Faculty of Computers & AI (sci)
 - And 13 more (see universities.js)
 
 ## Environment Variables Required

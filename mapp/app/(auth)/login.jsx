@@ -72,7 +72,7 @@ export default function LoginScreen() {
 
         <Text style={styles.label}>البريد الإلكتروني الجامعي</Text>
         <TextInput
-          placeholder="student@std.fci.cu.edu.eg"
+          placeholder="student@std.sci.cu.edu.eg"
           value={email}
           onChangeText={setEmail}
           style={styles.input}

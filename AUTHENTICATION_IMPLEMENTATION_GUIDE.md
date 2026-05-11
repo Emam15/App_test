@@ -486,7 +486,7 @@ Result: User has one account with both auth methods linked
 Currently configured universities in `backend/constants/universities.js`:
 
 - **Cairo University** (cu.edu.eg)
-  - Subdomains: sci, eng, med, dentistry, pharma, law, foc, edu, agr, vet, pt, fci, nursing, masscomm, feps, dar, arch, rup, sca
+  - Subdomains: sci, eng, med, dentistry, pharma, law, foc, edu, agr, vet, pt, sci, nursing, masscomm, feps, dar, arch, rup, sca
 
 ### Email Format Examples
 

@@ -19,7 +19,7 @@ const Universities = Object.freeze({
       agr: "Faculty of Agriculture",
       vet: "Faculty of Veterinary Medicine",
       pt: "Faculty of Physical Therapy",
-      fci: "Faculty of Computers & AI",
+      sci: "Faculty of Computers & AI",
       nursing: "Faculty of Nursing",
       masscomm: "Faculty of Mass Communication",
       feps: "Faculty of Economics & Political Science",
